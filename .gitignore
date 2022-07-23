@@ -1,0 +1,12 @@
+.git/
+.idea/
+__pycache__/
+O&S/
+защита курсовой/
+countries_raw.*
+cities_raw_*.*
+city_did_raw_*.*
+hotels_raw_*.*
+photos_raw_*.*
+
+
