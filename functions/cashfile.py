@@ -1,9 +1,7 @@
 import os
 
-from typing import *
+from config import FOLDER_REUSABLE
 
-FOLDER_REUSABLE = 'reusable'
-BOT_TOKEN = '5547620893:AAHaqK42H3J52nvX2MjNeBR4su3APKt9Olc'
 
 def cashfile(f_name: str) -> str:
     """

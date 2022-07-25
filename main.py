@@ -1,28 +1,14 @@
-import sys
+from loader import bot
 
-from globals import *
-from PcTelBot import PcTelBot
-
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Основная программа
-
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-
-try:
-    bot = PcTelBot(BOT_TOKEN, parse_mode=None)
-except Exception as e:
-    print(e)
-    sys.exit(1)
-
-try:
-    bot.polling(non_stop=True, interval=0)
-except Exception as e:
-    print(e)
-    sys.exit(2)
+from commands.start import start
+from commands.menu import menu
+from commands.main_menu_idle_button import main_menu_idle_button
+from commands.lowprice import lowprice_text, lowprice_button
+from commands.select_country import select_country
 
 
+if __name__ == '__main__':
 
+    # bot.add_custom_filter(MainMenuCallbackFilter())
 
-
-
-
+    bot.infinity_polling()

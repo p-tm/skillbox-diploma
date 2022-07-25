@@ -1,32 +1,34 @@
+from typing import *
+
 import requests
 import json
-
-from typing import *
-#from PcTelBot import PcTelBot
-from User import User
-
 
 class ApiCalls:
     """
     Класс:
     -----
+    Инкапсулирует работу с удалёнными серверами через API
 
 
     Аттрибуты:
     ---------
-
+    --
 
     Методы:
     ------
-
+    --
 
     """
     def get_countries_per_world(self):
         """
         Функция (метод объекта):
         -----------------------
+        Запрашивает полный список стран в мире
 
-        :return:
+        :return: Dict
+            - полученные данные в виде словаря (в "сыром" виде)
+        :return: int
+            - код ответа http запроса (используется для дальнейшей валидации данных)
 
         """
         url = "https://country-list5.p.rapidapi.com/countrylist/"
@@ -93,11 +95,11 @@ class ApiCalls:
 
         return location_dict, location_all.status_code
 
-    def get_hotels_per_city(self, bot: 'PcTelBot',  user: User):
+    def get_hotels_per_city(self, bot: 'telebot.TeleBot',  user: Dict):
         """
         Функция (метод объекта):
         -----------------------
-            Запрашивает перечень отелей в выбранном городе через API-call
+        Запрашивает перечень отелей в выбранном городе через API-call
 
         Примечания:
         ----------

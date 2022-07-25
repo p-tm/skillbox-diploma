@@ -1,4 +1,3 @@
-from Arrays import Cities
 
 class Country:
     """
@@ -16,6 +15,7 @@ class Country:
 
 
     """
+
     # !!! сохраняем id для страны и для города
     # потому что потом по id будем связывать их с кнопками на экране
 
@@ -24,12 +24,13 @@ class Country:
         self._iso = iso
         self._countryname = countryname
         self._nicename = nicename
-        self._cities = Cities()
+        #self._cities = Cities()
 
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
     геттеры и сеттеры
-    
+
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
     @property
     def id(self):
         return self._id
