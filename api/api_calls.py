@@ -1,50 +1,89 @@
+import time
+
+from json import loads
+from json.decoder import JSONDecodeError
+
+from requests import request, exceptions
+from requests.models import Response
+
 from typing import *
 
-import requests
-import json
+from config import API_HEADERS
+
+from exceptions.fatal_error import FatalError
+from exceptions.data_unavalible import DataUnavailible
+
+from functions.console_message import console_message
+
 
 class ApiCalls:
     """
-    Класс:
-    -----
     Инкапсулирует работу с удалёнными серверами через API
 
-
-    Аттрибуты:
-    ---------
-    --
-
-    Методы:
-    ------
-    --
-
     """
+    _headers = API_HEADERS
+
+    def request_helper(self, func: Callable, *, retries: Optional[int] = 1) -> Callable:
+        """
+        Декоратор - применяется к функции request
+        Обрабатывает ошибки функции request
+
+        :param func: Callable - декорируемая функция
+        :param retries: Optional[int] - число попыток
+        :return: Callable
+        :raise: DataUnavailible - не удалось получить данные
+
+        """
+        def helper(*args, **kwargs) -> Response:
+            _tries_counter = 1
+            while True:
+                try:
+                    resp: Response = func(*args, **kwargs)
+                    break
+                except exceptions.ConnectionError:
+                    if _tries_counter == retries:
+                        raise DataUnavailible('Нет связи с сервером данных')
+                    console_message('Список стран - нет связи с сервером данных. Следующая попытка...')
+                    time.sleep(3)
+                    _tries_counter += 1
+                except Exception as e:
+                    console_message(str(e))
+                    raise DataUnavailible
+            ''' считаем, что если код ответа 200, то данные точно целые и нормально потом декодируются '''
+            ''' всё равно непонятно, что можно сделать, если данные пришли "битые" '''
+            if resp.status_code != 200:
+                raise DataUnavailible('Код ответа от сервера: {}'.format(resp.status_code))
+            return resp
+
+        return helper
+
+
+    def json_decode_helper(self, func: Callable) -> Callable:
+
+        def helper(*args, **kwargs) -> Any:
+            try:
+                ''' тут уже знаем, что код ответа был 200, и данные точно целые и нормально декодируются '''
+                ''' всё равно непонятно, что можно сделать, если данные пришли "битые" '''
+                ''' просто выведем сообщение о том, что проблема при декодировании данных '''
+                return func(*args, **kwargs)
+            except (JSONDecodeError, TypeError, Exception) as e:
+                console_message('Ошибка при декодировании данных. ' + str(e))
+
+        return helper
+
     def get_countries_per_world(self):
         """
-        Функция (метод объекта):
-        -----------------------
         Запрашивает полный список стран в мире
 
-        :return: Dict
-            - полученные данные в виде словаря (в "сыром" виде)
-        :return: int
-            - код ответа http запроса (используется для дальнейшей валидации данных)
+        :return: Dict - полученные данные в виде словаря (в "сыром" виде)
 
         """
         url = "https://country-list5.p.rapidapi.com/countrylist/"
 
-        headers = {
-            "X-RapidAPI-Key": "fba64e5cf9msh04aa44d741bf7c4p107cf8jsn92e55fbb6b9f",
-            "X-RapidAPI-Host": "country-list5.p.rapidapi.com"
-        }
+        countries_all: Response = self.request_helper(request, retries=3)("GET", url, headers=self._headers)
+        countries_dict: Dict = self.json_decode_helper(loads)(countries_all.text)['country']
 
-        countries_all = requests.request("GET", url, headers=headers)
-        countries_dict = None
-
-        if countries_all.status_code == 200:
-            countries_dict = json.loads(countries_all.text)['country']
-
-        return countries_dict, countries_all.status_code
+        return countries_dict
 
 
     def get_cities_per_country(self, ciso: str):

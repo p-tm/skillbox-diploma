@@ -1,0 +1,2 @@
+class MessageTimeout(Exception):
+    pass

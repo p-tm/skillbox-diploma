@@ -1,34 +1,40 @@
 import sys
 
+from telebot import telebot, TeleBot
+from telebot.storage import StateMemoryStorage
 from typing import *
 
-from telebot import telebot
-from telebot import types as tt
-from telebot.storage import StateMemoryStorage
-
 from classes.countries import Countries
-
 from config import BOT_TOKEN
-
+from exceptions.data_unavalible import DataUnavailible
+from exceptions.fatal_error import FatalError
+from functions.console_message import console_message
 from functions.countries_per_world import countries_per_world
 from functions.init_ui import init_ui
 
-countries = Countries()
+
+
+countries: Countries = Countries()
 
 try:
     countries_per_world(countries)
-except Exception as e:
-    print(e)
-    sys.exit(1)
+except DataUnavailible as e:
+    console_message('Завершение работы. Не удалось получить перечень стран. ' + str(e))
+    sys.exit(4)
 
-storage = StateMemoryStorage()
+# doesn't throw exceptions
+storage: StateMemoryStorage = StateMemoryStorage()
 
-bot: telebot.TeleBot = telebot.TeleBot(
-    token=BOT_TOKEN,
-    state_storage=storage
-)
+# doesn't throw exceptions
+bot: TeleBot = TeleBot(token=BOT_TOKEN, state_storage=storage)
 
-init_ui(bot)
+try:
+    init_ui(bot, retries=3)
+except FatalError as e:
+    console_message('Завершение работы. Не удалось инициализировать бот. ' + str(e))
+    sys.exit(4)
+
+
 
 
 

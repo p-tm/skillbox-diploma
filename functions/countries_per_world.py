@@ -2,14 +2,11 @@ import os
 
 from typing import *
 
-from classes.country import Country
-from classes.countries import Countries
-
-from functions.cashfile import cashfile
-
 from api.api_calls import ApiCalls
-
-from exceptions.get_countries_failure import GetCountriesFailure
+from classes.countries import Countries
+from classes.country import Country
+from exceptions.data_unavalible import DataUnavailible
+from functions.cashfile import cashfile
 
 
 def countries_per_world(countries: Countries) -> None:
@@ -24,7 +21,7 @@ def countries_per_world(countries: Countries) -> None:
 
 
     :return: None
-    :raises: GetCountriesFailure
+    :raises: DataUnavailible
 
     """
     f_name: str = 'countries_raw.txt'
@@ -32,19 +29,14 @@ def countries_per_world(countries: Countries) -> None:
 
     if not os.path.exists(f_name):
 
-        countries_raw: List[Dict]
-        ret_code: int
+        try:
+            countries_raw: List[Dict] = ApiCalls().get_countries_per_world()
+        except DataUnavailible:
+            raise
 
-        countries_raw, ret_code = ApiCalls().get_countries_per_world()
-
-        if countries_raw is not None:
-            with open(f_name, 'w') as f_con:
-                f_con.write(str(countries_raw))
-        else:
-            raise GetCountriesFailure('Не удалось получить список стран')
-
+        with open(f_name, 'w') as f_con:
+            f_con.write(str(countries_raw))
     else:
-
         with open(f_name, 'r') as f_con:
             countries_raw = eval(f_con.read())
 

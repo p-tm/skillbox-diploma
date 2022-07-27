@@ -52,8 +52,8 @@ def lowprice_button(call: telebot.types.CallbackQuery):
     :return: None
 
     """
-    user = call.message.chat.id
-    chat = call.message.chat.id
+    user: int = call.message.chat.id
+    chat: int = call.message.chat.id
     bot.set_state(user_id=user, state=UserState.user_lowprice_in_progress, chat_id=chat)
 
     with bot.retrieve_data(user, chat) as data:
