@@ -3,11 +3,22 @@ from enum import Enum
 BOT_TOKEN = '5547620893:AAHaqK42H3J52nvX2MjNeBR4su3APKt9Olc'
 FOLDER_REUSABLE = 'reusable'
 MAX_KEYS_PER_KEYBOARD = 30
+DELETE_OLD_KEYBOARDS = True
 
-API_HEADERS = {
+COUNTRIES_API_HEADERS = {
     "X-RapidAPI-Key": "fba64e5cf9msh04aa44d741bf7c4p107cf8jsn92e55fbb6b9f",
     "X-RapidAPI-Host": "country-list5.p.rapidapi.com"
 }
+CITIES_API_HEADERS = {
+    "X-RapidAPI-Key": "fba64e5cf9msh04aa44d741bf7c4p107cf8jsn92e55fbb6b9f",
+    "X-RapidAPI-Host": "city-list.p.rapidapi.com"
+}
+
+
+class YES_NO(Enum):
+
+    NO = 1
+    YES = 2
 
 
 class MAIN_MENU_COMMANDS(Enum):
@@ -41,3 +52,6 @@ class LOWPRICE_SUBSTATES(Enum):
     SELECT_PHOTOS_AMOUNT = 5    # пользователь выбирает количество фото
     SELECT_CHECKIN_DATE = 6     # пользователь выбирает дату заезда
     SELECT_CHECKOUT_DATE = 7    # пользователь выбирает дату выезда
+    SHOW_SUMMARY = 8
+    REQUEST_HOTELS = 9
+    SHOW_RESULTS = 10

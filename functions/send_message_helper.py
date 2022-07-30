@@ -16,7 +16,7 @@ def send_message_helper(func: Callable, *, retries: Optional[int] = 1) -> Callab
     :param func: Callable - декорируемая функция
     :param retries: Optional[int] - число попыток
     :return: Callable
-    :raise: DataUnavailible - не удалось получить данные
+    :raise:
 
     """
     def helper(*args, **kwargs) -> telebot.types.Message:
@@ -24,16 +24,19 @@ def send_message_helper(func: Callable, *, retries: Optional[int] = 1) -> Callab
         while True:
             try:
                 result: telebot.types.Message = func(*args, **kwargs)
-                break
+                return result
             except (ConnectionError, ReadTimeout):
                 if _tries_counter == retries:
-                    raise MessageTimeout('Не удалось от править сообщение.')
+                    console_message('Не удалось от править сообщение.')
+                    #raise MessageTimeout('Не удалось от править сообщение.')
+                    return
                 console_message('Не удаётся отправить сообщение. Следующая попытка...')
                 time.sleep(3)
                 _tries_counter += 1
             except Exception as e:
                 console_message(str(e))
-                raise MessageTimeout('Не удалось от править сообщение.')
+                #raise MessageTimeout('Не удалось от править сообщение.')
+                return
 
     return helper
 

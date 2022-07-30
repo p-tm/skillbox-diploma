@@ -40,10 +40,6 @@ def countries_per_world(countries: Countries) -> None:
         with open(f_name, 'r') as f_con:
             countries_raw = eval(f_con.read())
 
-    # TODO переделать - если файл существует, то и структуру обновлять не надо
-    # TODO получается, что когда бот запускается это один раз должно произойти
-    # TODO и в остальных местах тоже
-
     def add_country(item):
         countries[item['id']] = Country(item['id'], item['iso'], item['countryname'], item['nicename'])
 

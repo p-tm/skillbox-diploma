@@ -6,7 +6,7 @@ from typing import  *
 from requests import exceptions
 
 from telebot import telebot
-from telebot import types as tt
+from telebot.types import BotCommand
 
 from functions.console_message import console_message
 
@@ -26,12 +26,12 @@ def init_ui(bot: telebot.TeleBot, *, retries: Optional[int] = 1) -> None:
     while True:
         try:
             bot.set_my_commands([
-                tt.BotCommand('/start', 'Перезапуск бота'),
-                tt.BotCommand('/help', 'Помощь'),
-                tt.BotCommand('/menu', 'Вызов меню команд'),
-                tt.BotCommand('/stop', 'Прервать текущий запрос'),
-                tt.BotCommand('/lowprice', 'Подобрать самые дешёвые отели'),
-                tt.BotCommand('/highprice', 'Подобрать самые дорогие отели')
+                BotCommand('/start', 'Перезапуск бота'),
+                BotCommand('/help', 'Помощь'),
+                #BotCommand('/menu', 'Вызов меню команд'),
+                BotCommand('/stop', 'Прервать текущий запрос'),
+                BotCommand('/lowprice', 'Подобрать самые дешёвые отели'),
+                BotCommand('/highprice', 'Подобрать самые дорогие отели')
             ])
             return
         except exceptions.ConnectionError as e:

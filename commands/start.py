@@ -34,18 +34,6 @@ def start(message: telebot.types.Message) -> None:
         if message.from_user.username is not None:
             hello_message += '(aka @{})\n'.format(message.from_user.username)
 
-        # try:
-        #     bot.send_message(
-        #         chat_id=chat2,
-        #         text=hello_message,
-        #         parse_mode='HTML'
-        #     )
-        # except exceptions.ReadTimeout:
-        #     a = 1
-        #     raise
-        # except BaseException as e:
-        #     b = 1
-
         send_message_helper(bot.send_message, retries=3)(chat_id=chat, text=hello_message, parse_mode='HTML')
 
         bot.set_state(user_id=user, state=UserState.user_started_bot, chat_id=chat)

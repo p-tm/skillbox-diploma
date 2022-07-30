@@ -8,7 +8,7 @@ from requests.models import Response
 
 from typing import *
 
-from config import API_HEADERS
+from config import COUNTRIES_API_HEADERS, CITIES_API_HEADERS
 
 from exceptions.fatal_error import FatalError
 from exceptions.data_unavalible import DataUnavailible
@@ -21,15 +21,16 @@ class ApiCalls:
     Инкапсулирует работу с удалёнными серверами через API
 
     """
-    _headers = API_HEADERS
+    _countries_api_headers = COUNTRIES_API_HEADERS
+    _cities_api_headers = CITIES_API_HEADERS
 
     def request_helper(self, func: Callable, *, retries: Optional[int] = 1) -> Callable:
         """
         Декоратор - применяется к функции request
         Обрабатывает ошибки функции request
 
-        :param func: Callable - декорируемая функция
-        :param retries: Optional[int] - число попыток
+        :param func: декорируемая функция
+        :param retries: число попыток
         :return: Callable
         :raise: DataUnavailible - не удалось получить данные
 
@@ -71,7 +72,7 @@ class ApiCalls:
 
         return helper
 
-    def get_countries_per_world(self):
+    def get_countries_per_world(self) -> Dict:
         """
         Запрашивает полный список стран в мире
 
@@ -80,34 +81,39 @@ class ApiCalls:
         """
         url = "https://country-list5.p.rapidapi.com/countrylist/"
 
-        countries_all: Response = self.request_helper(request, retries=3)("GET", url, headers=self._headers)
+        countries_all: Response = self.request_helper(request, retries=3)("GET", url, headers=self._countries_api_headers)
         countries_dict: Dict = self.json_decode_helper(loads)(countries_all.text)['country']
 
         return countries_dict
 
 
-    def get_cities_per_country(self, ciso: str):
+    def get_cities_per_country(self, ciso: str) -> Dict:
         """
-        Функция (метод объекта):
-        -----------------------
+        Получает список городов в указанной стране
+
+        :param ciso: ISO-обозначение страны
 
         :return:
 
         """
         url = "https://city-list.p.rapidapi.com/api/getCity/" + ciso
 
-        headers = {
-            "X-RapidAPI-Key": "fba64e5cf9msh04aa44d741bf7c4p107cf8jsn92e55fbb6b9f",
-            "X-RapidAPI-Host": "city-list.p.rapidapi.com"
-        }
+        # headers = {
+        #     "X-RapidAPI-Key": "fba64e5cf9msh04aa44d741bf7c4p107cf8jsn92e55fbb6b9f",
+        #     "X-RapidAPI-Host": "city-list.p.rapidapi.com"
+        # }
 
-        cities_all = requests.request("GET", url, headers=headers)
-        cities_dict = None
+        cities_all: Response = self.request_helper(request, retries=3)("GET", url, headers=self._cities_api_headers)
+        cities_dict: Dict = self.json_decode_helper(loads)(cities_all.text)['0']
 
-        if cities_all.status_code == 200:
-            cities_dict = json.loads(cities_all.text)['0']
+        return cities_dict
 
-        return cities_dict, cities_all.status_code
+        # cities_dict = None
+        #
+        # if cities_all.status_code == 200:
+        #     cities_dict = json.loads(cities_all.text)['0']
+        #
+        # return cities_dict, cities_all.status_code
 
     def get_city_destination_id(self, city_name: str):
         """

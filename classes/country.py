@@ -1,32 +1,32 @@
 from dataclasses import dataclass
 
+from classes.cities import Cities
+
 @dataclass
 class Country:
     """
-    Класс:
-    -----
     Описание сущности "Страна"
 
-
-    Аттрибуты:
-    ---------
-
-
-    Методы:
-    ------
-
-
     """
-
     # !!! сохраняем id для страны и для города
     # потому что потом по id будем связывать их с кнопками на экране
 
-    def __init__(self, id, iso, countryname, nicename):
+    def __init__(self, id: int, iso: str, countryname: str, nicename: str):
+        """
+        Конструктор
+
+        :param id: id страны
+        :param iso:
+        :param countryname:
+        :param nicename:
+        :return: None
+
+        """
         self._id = id
         self._iso = iso
         self._countryname = countryname
         self._nicename = nicename
-        #self._cities = Cities()
+        self._cities = Cities()
 
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
     геттеры и сеттеры
