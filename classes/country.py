@@ -11,7 +11,14 @@ class Country:
     # !!! сохраняем id для страны и для города
     # потому что потом по id будем связывать их с кнопками на экране
 
-    def __init__(self, id: int, iso: str, countryname: str, nicename: str):
+    _country_id: int    # иденитфикатор страны
+    _iso: str           # iso-код
+    #_countryname: str   # название
+    _nicename: str      # название
+    _cities: Cities     # массив городов
+
+
+    def __init__(self, c_id: int, iso: str, countryname: str, nicename: str):
         """
         Конструктор
 
@@ -22,10 +29,10 @@ class Country:
         :return: None
 
         """
-        self._id = id
-        self._iso = iso
-        self._countryname = countryname
-        self._nicename = nicename
+        self.country_id = c_id
+        self.iso = iso
+        #self._countryname = countryname
+        self.nicename = nicename
         self._cities = Cities()
 
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -34,16 +41,25 @@ class Country:
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
     @property
-    def id(self):
-        return self._id
+    def country_id(self):
+        return self._country_id
+    @country_id.setter
+    def country_id(self, val):
+        self._country_id = val
 
     @property
     def iso(self):
         return self._iso
+    @iso.setter
+    def iso(self, val):
+        self._iso = val
 
     @property
     def nicename(self):
         return self._nicename
+    @nicename.setter
+    def nicename(self, val):
+        self._nicename = val
 
     @property
     def cities(self):

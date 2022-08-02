@@ -9,6 +9,7 @@ from typing import *
 
 from classes.cities import Cities
 from classes.user_state import UserState
+from classes.user_state_data import UserStateData
 from commands.select_hotels_amount import select_hotels_amount
 from config import DELETE_OLD_KEYBOARDS, LOWPRICE_SUBSTATES, MAX_KEYS_PER_KEYBOARD
 
@@ -61,7 +62,7 @@ def keyboard_select_city(cid: int, current: Optional[int] = 1) -> Tuple[telebot.
         [
             InlineKeyboardButton(
                 text=_cities[j * 3 + i].name,
-                callback_data=select_city_buttons_callback_factory.new(cmd_id=str(_cities[j * 3 + i].id))
+                callback_data=select_city_buttons_callback_factory.new(cmd_id=str(_cities[j * 3 + i].city_id))
             )
             for i in range(3)
             if j * 3 + i < countries[cid].cities.size
@@ -93,7 +94,7 @@ def select_city(cid: int, message: telebot.types.Message, kbrd: Optional[int] = 
     chat: int = message.chat.id
     keyboard, current, last = keyboard_select_city(cid, kbrd)
 
-    with bot.retrieve_data(user, chat) as data:
+    with bot.retrieve_data(user_id=user, chat_id=chat) as data:
         data['usd'].set_keyboard_data(case='cities', current=current, last=last)
 
     # рисуем первые 30 кнопок
@@ -118,7 +119,6 @@ def next_part_of_keyboard(call: telebot.types.CallbackQuery) -> None:
     Обработчик события нажатия на кнопку "ещё..." (т.е. показать следующую часть клавиатуры)
 
     :param call: telebot.types.CallbackQuery
-    :return: None
 
     """
     user: int = call.message.chat.id
@@ -130,7 +130,8 @@ def next_part_of_keyboard(call: telebot.types.CallbackQuery) -> None:
             message_id=call.message.id
         )
 
-    with bot.retrieve_data(user, chat) as data:
+    data: Dict[str, UserStateData]
+    with bot.retrieve_data(user_id=user, chat_id=chat) as data:
         cid: int = data['usd'].selected_country_id
         kbrd: int = data['usd'].next_keyboard()
 
@@ -163,15 +164,14 @@ def city_selector_button(call: telebot.types.CallbackQuery) -> None:
     #         message_id=call.message.id
     #     )
 
-    with bot.retrieve_data(user, chat) as data:
+    data: Dict[str, UserStateData]
+    with bot.retrieve_data(user_id=user, chat_id=chat) as data:
         data['usd'].selected_city_id = selected_city_id
         data['usd'].reinit_keyboard()
 
     # новое состояние
-    with bot.retrieve_data(user, chat) as data:
+    with bot.retrieve_data(user_id=user, chat_id=chat) as data:
         data['usd'].substate = LOWPRICE_SUBSTATES.SELECT_HOTELS_AMOUNT.value
-
-    st = storage
 
     select_hotels_amount(message=call.message)
 

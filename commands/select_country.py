@@ -51,17 +51,17 @@ def keyboard_select_country(countries: Countries, current: Optional[int] = 1) ->
     :return: Tuple[объект inline-клавиатура для сообщения, номер текущей, всего]
 
     """
-    _countries = list(countries.values())
+    _countries = list(countries.values())   # перечень стран в виде List - для удобства
     keys_per_kb: int = MAX_KEYS_PER_KEYBOARD
-    number_of_keyboards = math.ceil(countries.size / keys_per_kb)
-    first_row = int((current - 1) * keys_per_kb/3)
-    last_row = first_row + int(keys_per_kb/3)
+    number_of_keyboards: int = math.ceil(countries.size / keys_per_kb)  # сколько частичных клавиатур получится
+    first_row: int = int((current - 1) * keys_per_kb/3) # номер первой строки в частичной клавиатуре
+    last_row: int = first_row + int(keys_per_kb/3)      # номер последней строки в частичной клавиатуре
 
     buttons = [
         [
             InlineKeyboardButton(
                 text=_countries[j * 3 + i].nicename,
-                callback_data=select_country_buttons_callback_factory.new(cmd_id=str(_countries[j * 3 + i].id))
+                callback_data=select_country_buttons_callback_factory.new(cmd_id=str(_countries[j * 3 + i].country_id))
             )
             for i in range(3)
             if j * 3 + i < countries.size
@@ -75,7 +75,7 @@ def keyboard_select_country(countries: Countries, current: Optional[int] = 1) ->
             ]
         )
 
-    keyboard = InlineKeyboardMarkup(buttons)
+    keyboard: telebot.types.InlineKeyboardMarkup = InlineKeyboardMarkup(buttons)
 
     return keyboard, current, number_of_keyboards
 
@@ -92,7 +92,8 @@ def select_country(message: telebot.types.Message, kbrd: Optional[int] = 1) -> N
     chat: int = message.chat.id
     keyboard, current, last = keyboard_select_country(countries, kbrd)
 
-    with bot.retrieve_data(user, chat) as data:
+    data: Dict
+    with bot.retrieve_data(user_id=user, chat_id=chat) as data:
         data['usd'].set_keyboard_data(case='countries', current=current, last=last)
 
     # рисуем первые 30 кнопок
@@ -102,7 +103,8 @@ def select_country(message: telebot.types.Message, kbrd: Optional[int] = 1) -> N
         reply_markup=keyboard
     )
 
-    with bot.retrieve_data(user, chat) as data:
+    data: Dict
+    with bot.retrieve_data(user_id=user, chat_id=chat) as data:
         data['usd'].message_to_delete = msg
         data['usd'].last_message = msg
 
@@ -169,6 +171,7 @@ def country_selector_button(call: telebot.types.CallbackQuery) -> None:
     with bot.retrieve_data(user, chat) as data:
         data['usd'].substate = LOWPRICE_SUBSTATES.SELECT_CITY.value
 
+    # запрашиваем список городов в стране (удалённый запрос)
     try:
         cities_per_country(selected_country_id)
     except DataUnavailible as e:
@@ -176,7 +179,8 @@ def country_selector_button(call: telebot.types.CallbackQuery) -> None:
         send_message_helper(bot.send_message, retries=3)(
             user_id=user,
             chat_id=chat,
-            text="🚫 Не могу получить список городов.")
+            text="🚫 Не могу получить список городов."
+         )
 
     select_city(cid=selected_country_id, message=call.message)
 

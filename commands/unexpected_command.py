@@ -13,12 +13,14 @@ def unexpected_command(message: telebot.types.Message) -> None:
     :param message:
 
     """
+    unknown_command_message: str = ('Неизвестная или недопустимая команда.\n'
+                                    'Если Вы хотите остановить выполнение текущей команды, введите "/stop"')
     user: int = message.chat.id
     chat: int = message.chat.id
 
     send_message_helper(bot.send_message, retries=3)(
         chat_id=chat,
-        text='Неизвестная или недопустимая команда.\nЕсли Вы хотите остановить выполнение текущей команды, введите "/stop"'
+        text=unknown_command_message
     )
 
     # вытаскиваем предыдущее сообщение (до неизвестной команды)

@@ -1,8 +1,11 @@
 from telebot import telebot
+from typing import *
 
+from classes.user_state_data import UserStateData
 from commands.select_photo_required import select_photo_required
-from config import DELETE_OLD_KEYBOARDS, LOWPRICE_SUBSTATES
+from config import DELETE_OLD_KEYBOARDS, LOWPRICE_SUBSTATES, MAX_HOTELS_AMOUNT
 from functions.send_message_helper import send_message_helper
+from functions.value_valid import value_valid
 from loader import bot, storage
 
 def select_hotels_amount(message: telebot.types.Message) -> None:
@@ -12,16 +15,19 @@ def select_hotels_amount(message: telebot.types.Message) -> None:
     :param message: предыдущее сообщение для передачи user и chat
 
     """
+    hotels_number_message = 'Введите количество отелей: (максимум {})'.format(MAX_HOTELS_AMOUNT)
+
     user: int = message.chat.id
     chat: int = message.chat.id
 
     # приглашение
     msg: telebot.types.Message = send_message_helper(bot.send_message)(
         chat_id=chat,
-        text='Введите количество отелей:'
+        text=hotels_number_message
     )
 
-    with bot.retrieve_data(user, chat) as data:
+    data: Dict[str, UserStateData]
+    with bot.retrieve_data(user_id=user, chat_id=chat) as data:
         # data['usd'].message_to_delete = msg
         data['usd'].last_message = msg
 
@@ -37,18 +43,22 @@ def filter_func(message: telebot.types.Message) -> bool:
     user: int = message.chat.id
     chat: int = message.chat.id
 
-    with bot.retrieve_data(user, chat) as data:
+    data: Dict[str, UserStateData]
+    with bot.retrieve_data(user_id=user, chat_id=chat) as data:
         return data['usd'].substate == LOWPRICE_SUBSTATES.SELECT_HOTELS_AMOUNT.value
 
-
-@bot.message_handler(is_digit=True, content_types=['text'], func=filter_func)
+# @bot.message_handler(is_digit=True, content_types=['text'], func=filter_func)
+@bot.message_handler(content_types=['text'], func=filter_func)
 def hotels_amount_text(message: telebot.types.Message) -> None:
     """
-    Обработчик
+    Обработчик - считывает количество отелей
 
-    :param message:
+    :param message: предыдущее сообщение в чате Telegram
 
     """
+    nan_message: str = 'Необходимо ввести целое число от 1 до {}. Введите ещё раз'.format(MAX_HOTELS_AMOUNT)
+    not_in_range_message: str = nan_message
+
     user: int = message.chat.id
     chat: int = message.chat.id
 
@@ -67,13 +77,33 @@ def hotels_amount_text(message: telebot.types.Message) -> None:
     #     )
 
     # запоминаем число отелей
-    with bot.retrieve_data(user, chat) as data:
-        data['usd'].hotels_amount = int(message.text)
+    data: Dict[str, UserStateData]
+    with bot.retrieve_data(user_id=user, chat_id=chat) as data:
+        try:
+            hotels_amount: int = int(message.text)
+        except ValueError:
+            send_message_helper(bot.send_message, retries=3)(
+                chat_id=chat,
+                text=nan_message
+            )
+            select_hotels_amount(message)
+            return
+
+        if not value_valid(hotels_amount, 1, MAX_HOTELS_AMOUNT):
+            send_message_helper(bot.send_message, retries=3)(
+                chat_id=chat,
+                text=not_in_range_message
+            )
+            select_hotels_amount(message)
+            return
+
+        data['usd'].hotels_amount = hotels_amount
 
     """ переходим к выбору нужны ли картинки """
 
     # переходим в новое состояние
-    with bot.retrieve_data(user, chat) as data:
+    data: Dict[str, UserStateData]
+    with bot.retrieve_data(user_id=user, chat_id=chat) as data:
         data['usd'].substate = LOWPRICE_SUBSTATES.SELECT_PHOTO_REQUIRED.value
 
     select_photo_required(message=message)

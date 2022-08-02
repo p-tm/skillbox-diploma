@@ -1,4 +1,6 @@
-from loader import bot
+from typing import *
+
+
 
 from commands.main_menu_idle_button import main_menu_idle_button
 from commands.start import start
@@ -6,6 +8,7 @@ from commands.stop import stop
 from commands.lowprice import lowprice
 from commands.unexpected_command import unexpected_command
 from functions.console_message import console_message
+from loader import bot
 
 if __name__ == '__main__':
 

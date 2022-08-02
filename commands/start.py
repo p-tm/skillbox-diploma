@@ -25,9 +25,9 @@ def start(message: telebot.types.Message) -> None:
 
     if bot.get_state(user, chat) is None:
 
-        hello_message: str = 'Здравствуйте!\n\n' \
-                             'Это бот по поиску и подбору отелей\n\n' \
-                             'Если я правильно понимаю, Вы - <b>{}</b>\n'.format(
+        hello_message: str = ('Здравствуйте!\n\n'
+                             'Это бот по поиску и подбору отелей\n\n'
+                             'Если я правильно понимаю, Вы - <b>{}</b>\n').format(
             message.from_user.full_name
         )
 
@@ -43,8 +43,8 @@ def start(message: telebot.types.Message) -> None:
         menu(message)
 
     else:
-        already_started_message: str = 'Вы уже стартовали. Для прерывания выполнения текущего запроса используйте ' \
-                                       'команду "/stop" '
+        already_started_message: str = ('Вы уже стартовали. Для прерывания выполнения текущего запроса используйте '
+                                       'команду "/stop" ')
         send_message_helper(bot.send_message, retries=3)(chat_id=chat, text=already_started_message)
         # try:
         #     bot.send_message(

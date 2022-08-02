@@ -2,6 +2,7 @@ from telebot import telebot
 from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
 from telebot.callback_data import CallbackData, CallbackDataFilter
 from telebot.custom_filters import AdvancedCustomFilter
+from typing import *
 
 from functions.send_message_helper import send_message_helper
 from loader import bot, input_date_callback_factory
@@ -21,59 +22,78 @@ class InputDateCallbackFilter(AdvancedCustomFilter):
         Функция фильтрации
 
         """
-        x = config.check(query=call)
-        return x
+        return config.check(query=call)
 
 
 bot.add_custom_filter(InputDateCallbackFilter())
 
+def days_buttons_row(start_day: int) -> List[telebot.types.InlineKeyboardButton]:
+    """
+    Генератор кнопок для "дней" по строкам
+
+    :param start_day: первый день в строек
+    :return: строка кнопок
+
+    """
+    if start_day < 29:
+        out: List[telebot.types.InlineKeyboardButton] = [
+            InlineKeyboardButton(text=str(i), callback_data=input_date_callback_factory.new(type='D', content=str(i)))
+            for i in range(start_day, start_day + 7)
+        ]
+    else:
+        out: List[telebot.types.InlineKeyboardButton] = [
+            InlineKeyboardButton(text=str(i), callback_data=input_date_callback_factory.new(type='D', content=str(i)))
+            for i in range(29, 29 + 3)
+        ]
+        aux: List[telebot.types.InlineKeyboardButton] = [
+            InlineKeyboardButton(text='-', callback_data=input_date_callback_factory.new(type='idle', content='idle'))
+            for _ in range(4)
+        ]
+        out.extend(aux)
+
+    return out
+
+def months_buttons_row(start_month: int) -> List[telebot.types.InlineKeyboardButton]:
+    """
+    Генератор кнопок для "месяцев" по строкам
+
+    :param start_month: первый месяц в строке
+    :return: строка кнопок
+
+    """
+    months: Tuple = ('янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек')
+    start_index: int = start_month - 1
+
+    return [
+        InlineKeyboardButton(text=months[i], callback_data=input_date_callback_factory.new(type='M', content=(i + 1)))
+        for i in range(start_index, start_index + 6)
+    ]
+
+def years_buttons_row(start_year: int, size: int) -> List[telebot.types.InlineKeyboardButton]:
+    """
+    Генератор кнопок для "годов" по строкам
+
+    :param start_year: первый год в строке
+    :param size: количество кнопок
+    :return: строка кнопок
+
+    """
+    return [
+        InlineKeyboardButton(text=str(i), callback_data=input_date_callback_factory.new(type='Y', content=i))
+        for i in range(start_year, start_year + size)
+    ]
+
+
 def keyboard_input_date():
     buttons = [
-        [
-            InlineKeyboardButton(text=str(i), callback_data=input_date_callback_factory.new(type='D',  content=str(i)))
-            for i in range(1, 1 + 7)
-        ],
-        [
-            InlineKeyboardButton(text=str(i), callback_data=input_date_callback_factory.new(type='D',  content=str(i)))
-            for i in range(8, 8 + 7)
-        ],
-        [
-            InlineKeyboardButton(text=str(i), callback_data=input_date_callback_factory.new(type='D',  content=str(i)))
-            for i in range(15, 15 + 7)
-        ],
-        [
-            InlineKeyboardButton(text=str(i), callback_data=input_date_callback_factory.new(type='D',  content=str(i)))
-            for i in range(22, 22 + 7)
-        ],
-        [
-            InlineKeyboardButton(text='29', callback_data=input_date_callback_factory.new(type='D', content=29)),
-            InlineKeyboardButton(text='30', callback_data=input_date_callback_factory.new(type='D', content=30)),
-            InlineKeyboardButton(text='31', callback_data=input_date_callback_factory.new(type='D', content=31)),
-            InlineKeyboardButton(text='-', callback_data=input_date_callback_factory.new(type='idle', content='idle')),
-            InlineKeyboardButton(text='-', callback_data=input_date_callback_factory.new(type='idle', content='idle')),
-            InlineKeyboardButton(text='-', callback_data=input_date_callback_factory.new(type='idle', content='idle')),
-            InlineKeyboardButton(text='-', callback_data=input_date_callback_factory.new(type='idle', content='idle'))
-        ],
-        [
-            InlineKeyboardButton(text='янв', callback_data=input_date_callback_factory.new(type='M', content=1)),
-            InlineKeyboardButton(text='фев', callback_data=input_date_callback_factory.new(type='M', content=2)),
-            InlineKeyboardButton(text='мар', callback_data=input_date_callback_factory.new(type='M', content=3)),
-            InlineKeyboardButton(text='апр', callback_data=input_date_callback_factory.new(type='M', content=4)),
-            InlineKeyboardButton(text='май', callback_data=input_date_callback_factory.new(type='M', content=5)),
-            InlineKeyboardButton(text='июн', callback_data=input_date_callback_factory.new(type='M', content=6))
-        ],
-        [
-            InlineKeyboardButton(text='июл', callback_data=input_date_callback_factory.new(type='M', content=7)),
-            InlineKeyboardButton(text='авг', callback_data=input_date_callback_factory.new(type='M', content=8)),
-            InlineKeyboardButton(text='сен', callback_data=input_date_callback_factory.new(type='M', content=9)),
-            InlineKeyboardButton(text='окт', callback_data=input_date_callback_factory.new(type='M', content=10)),
-            InlineKeyboardButton(text='ноя', callback_data=input_date_callback_factory.new(type='M', content=11)),
-            InlineKeyboardButton(text='дек', callback_data=input_date_callback_factory.new(type='M', content=12))
-        ],
-        [
-            InlineKeyboardButton(text='2022', callback_data=input_date_callback_factory.new(type='Y', content=2022)),
-            InlineKeyboardButton(text='2023', callback_data=input_date_callback_factory.new(type='Y', content=2023))
-        ],
+        days_buttons_row(1),
+        days_buttons_row(8),
+        days_buttons_row(15),
+        days_buttons_row(22),
+        days_buttons_row(29),
+        months_buttons_row(1),
+        months_buttons_row(7),
+        years_buttons_row(2022, 2),
         [
             InlineKeyboardButton(text='Готово', callback_data=input_date_callback_factory.new(type='enter', content='enter'))
         ]

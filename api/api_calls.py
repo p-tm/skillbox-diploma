@@ -2,18 +2,16 @@ import time
 
 from json import loads
 from json.decoder import JSONDecodeError
-
 from requests import request, exceptions
 from requests.models import Response
-
 from typing import *
 
-from config import COUNTRIES_API_HEADERS, CITIES_API_HEADERS
-
+from classes.user_state_data import UserStateData
+from config import COUNTRIES_API_HEADERS, CITIES_API_HEADERS, HOTELS_API_HEADERS
 from exceptions.fatal_error import FatalError
 from exceptions.data_unavalible import DataUnavailible
-
 from functions.console_message import console_message
+
 
 
 class ApiCalls:
@@ -23,6 +21,7 @@ class ApiCalls:
     """
     _countries_api_headers = COUNTRIES_API_HEADERS
     _cities_api_headers = CITIES_API_HEADERS
+    _hotels_api_headers = HOTELS_API_HEADERS
 
     def request_helper(self, func: Callable, *, retries: Optional[int] = 1) -> Callable:
         """
@@ -98,27 +97,14 @@ class ApiCalls:
         """
         url = "https://city-list.p.rapidapi.com/api/getCity/" + ciso
 
-        # headers = {
-        #     "X-RapidAPI-Key": "fba64e5cf9msh04aa44d741bf7c4p107cf8jsn92e55fbb6b9f",
-        #     "X-RapidAPI-Host": "city-list.p.rapidapi.com"
-        # }
-
         cities_all: Response = self.request_helper(request, retries=3)("GET", url, headers=self._cities_api_headers)
         cities_dict: Dict = self.json_decode_helper(loads)(cities_all.text)['0']
 
         return cities_dict
 
-        # cities_dict = None
-        #
-        # if cities_all.status_code == 200:
-        #     cities_dict = json.loads(cities_all.text)['0']
-        #
-        # return cities_dict, cities_all.status_code
-
-    def get_city_destination_id(self, city_name: str):
+    def get_city_destination_id(self, city_name: str) -> Dict:
         """
-        Функция (метод объекта):
-        -----------------------
+        Получает 'destination_id' по указанному городу (по строковому имени)
 
         :return:
 
@@ -127,28 +113,15 @@ class ApiCalls:
 
         querystring = {"query": city_name}
 
-        headers = {
-            "X-RapidAPI-Key": "fba64e5cf9msh04aa44d741bf7c4p107cf8jsn92e55fbb6b9f",
-            "X-RapidAPI-Host": "hotels4.p.rapidapi.com"
-        }
+        location_all: Response = request("GET", url, headers=self._hotels_api_headers, params=querystring)
+        location_dict: Dict = loads(location_all.text)
 
-        location_all = requests.request("GET", url, headers=headers, params=querystring)
-        location_dict = None
+        return location_dict
 
-        if location_all.status_code == 200:
-            location_dict = json.loads(location_all.text)
-
-        return location_dict, location_all.status_code
-
-    def get_hotels_per_city(self, bot: 'telebot.TeleBot',  user: Dict):
+    def get_hotels_per_city(self, usd: UserStateData) -> Dict:
         """
-        Функция (метод объекта):
-        -----------------------
-        Запрашивает перечень отелей в выбранном городе через API-call
-
-        Примечания:
-        ----------
-            API-call может сам вернуть нужно кол-во отелей (??)
+        Получает перечень отелей в выбранном городе через API-call
+        API-call может сам возвращает заданное кол-во отелей
 
         :param bot: PcTelBot
             -
@@ -159,16 +132,18 @@ class ApiCalls:
 
         """
 
+        from loader import countries
+
         # тут уже требуется указать даты
 
         url: 'URL' = "https://hotels4.p.rapidapi.com/properties/list"
 
-        destination_id: int = bot.countries[user.selected_country].cities[user.selected_city].dids[0]
-        # checkin_date = user.checkin_date
-        # checkout_date = user.checkout_date
-        checkin_date = '2022-09-01'
-        checkout_date = '2022-09-05'
-        amount = user.hotels_amount
+        destination_id: int = countries[usd.selected_country_id].cities[usd.selected_city_id].dids[0]
+        checkin_date = usd.checkin_date.strftime('%Y-%m-%d')
+        checkout_date = usd.checkout_date.strftime('%Y-%m-%d')
+        # checkin_date = '2022-09-01'
+        # checkout_date = '2022-09-05'
+        amount = usd.hotels_amount
 
         querystring: Dict = {
             "destinationId": destination_id,
@@ -180,50 +155,29 @@ class ApiCalls:
             "sortOrder": "PRICE"
         }
 
-        headers: Dict = {
-            "X-RapidAPI-Key": "fba64e5cf9msh04aa44d741bf7c4p107cf8jsn92e55fbb6b9f",
-            "X-RapidAPI-Host": "hotels4.p.rapidapi.com"
-        }
+        hotels_all: Response = request("GET", url, headers=self._hotels_api_headers, params=querystring)
+        hotels_dict: Dict = loads(hotels_all.text)
 
-        hotels_all = requests.request("GET", url, headers=headers, params=querystring)
-        hotels_dict = None
+        return hotels_dict
 
-        if hotels_all.status_code == 200:
-            hotels_dict = json.loads(hotels_all.text)
-
-        return hotels_dict, hotels_all.status_code
-
-    def get_hotel_pictures(self, hotel_id: int):
+    def get_hotel_pictures(self, hotel_id: int) -> Dict:
         """
-        Функция:
-        --------
-            Запрашивает фото отеля через API-call
+        Получает фото отеля через API-call
+        API-call не может получить указанное кол-во картинок, может только все
 
-        Примечания:
-        ----------
-            API-call не может получить указанное кол-во картинок, может только все
-
-        :param hotel_id:
+        :param hotel_id: id отеля, полученное из предыдущего запроса API-call
         :return:
 
         """
-
-        url = "https://hotels4.p.rapidapi.com/properties/get-hotel-photos"
+        url: 'URL' = "https://hotels4.p.rapidapi.com/properties/get-hotel-photos"
 
         querystring = {"id": hotel_id}
 
-        headers = {
-            "X-RapidAPI-Key": "fba64e5cf9msh04aa44d741bf7c4p107cf8jsn92e55fbb6b9f",
-            "X-RapidAPI-Host": "hotels4.p.rapidapi.com"
-        }
+        pictures_all: Response = request("GET", url, headers=self._hotels_api_headers, params=querystring)
+        pictures_dict: Dict = loads(pictures_all.text)
 
-        pictures_all = requests.request("GET", url, headers=headers, params=querystring)
-        pictures_dict = None
+        return pictures_dict
 
-        if pictures_all.status_code == 200:
-            pictures_dict: Dict = json.loads(pictures_all.text)
-
-        return pictures_dict, pictures_all.status_code
 
 
 

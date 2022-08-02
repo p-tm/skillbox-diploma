@@ -9,7 +9,7 @@ from exceptions.data_unavalible import DataUnavailible
 from functions.cashfile import cashfile
 from loader import countries
 
-def cities_per_country(cid: int):
+def cities_per_country(cid: int) -> None:
     """
     Формирует спискок городов для выбранной страны
 
@@ -17,7 +17,6 @@ def cities_per_country(cid: int):
     Но, т.к. в данной конкретной работе....
 
     :param cid: int - id страны
-    :return:
 
     """
     country = countries[cid]
@@ -27,7 +26,7 @@ def cities_per_country(cid: int):
     if not os.path.exists(f_name):
 
         try:
-            cities_raw: List[Dict] = ApiCalls().get_cities_per_country(country.iso)
+            hotels_row: List[Dict] = ApiCalls().get_hotels_per_city()
         except DataUnavailible:
             raise
 

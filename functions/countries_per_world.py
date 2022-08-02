@@ -19,8 +19,7 @@ def countries_per_world(countries: Countries) -> None:
     формируем файл, и при следующем считывании проверяем наличие этого файла.
     Если файл существует - читаем не из удалённой базы, а из файла
 
-
-    :return: None
+    :param countries: массив записей о странах (внешний mutable)
     :raises: DataUnavailible
 
     """

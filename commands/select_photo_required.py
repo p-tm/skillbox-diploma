@@ -5,6 +5,7 @@ from telebot.callback_data import CallbackData, CallbackDataFilter
 from telebot.custom_filters import AdvancedCustomFilter
 from typing import *
 
+from classes.user_state_data import UserStateData
 from commands.select_checkin_date import select_checkin_date
 from commands.select_photos_amount import select_photos_amount
 from config import DELETE_OLD_KEYBOARDS, LOWPRICE_SUBSTATES, YES_NO
@@ -64,9 +65,10 @@ def select_photo_required(message: telebot.types.Message) -> None:
         reply_markup=keyboard
     )
 
-    with bot.retrieve_data(user, chat) as data:
+    data: Dict[str, UserStateData]
+    with bot.retrieve_data(user_id=user, chat_id=chat) as data:
         # data['usd'].message_to_delete = msg
-        data['usd'].lasst_message = msg
+        data['usd'].last_message = msg
 
 
 @bot.callback_query_handler(

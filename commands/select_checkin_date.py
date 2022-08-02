@@ -3,9 +3,11 @@ from datetime import datetime
 from telebot import telebot
 from typing import *
 
+from classes.user_state_data import UserStateData
 from commands.select_checkout_date import select_checkout_date
 from config import DELETE_OLD_KEYBOARDS, LOWPRICE_SUBSTATES
 from functions import keyboard_input_date
+from functions.console_message import console_message
 from functions.send_message_helper import send_message_helper
 from functions.keyboard_input_date import keyboard_input_date, input_date_callback_factory
 from functions.reenter_date import reenter_date
@@ -21,7 +23,7 @@ def select_checkin_date(message: telebot.types.Message) -> None:
     """
     user: int = message.chat.id
     chat: int = message.chat.id
-    keyboard = keyboard_input_date()
+    keyboard: telebot.types.InlineKeyboardMarkup = keyboard_input_date()
 
     # приглашение
     msg: telebot.types.Message = send_message_helper(bot.send_message, retries=3)(
@@ -30,109 +32,28 @@ def select_checkin_date(message: telebot.types.Message) -> None:
         reply_markup=keyboard
     )
 
-    with bot.retrieve_data(user, chat) as data:
+    data: Dict[str, UserStateData]
+    with bot.retrieve_data(user_id=user, chat_id=chat) as data:
         data['usd'].message_to_delete = msg
         data['usd'].last_message = msg
 
 
-def filter_func(call):
+def filter_func(call: telebot.types.CallbackQuery) -> bool:
+    """
+    Функция фильтрации
+    Условие: находимся в состоянии SELECT_CHECKIN_DATE
+    Пропускает сообщение от кнопки "Готово"
 
-    user = call.message.chat.id
-    chat = call.message.chat.id
+    :param call: telebot.types.CallbackQuery
+    :return: bool: True = фильтр пройдён
 
+    """
+    user: int = call.message.chat.id
+    chat: int = call.message.chat.id
+
+    data: Dict[str, UserStateData]
     with bot.retrieve_data(user, chat) as data:
-        x = data['usd'].substate == LOWPRICE_SUBSTATES.SELECT_CHECKIN_DATE.value
-        return x
-
-
-# @bot.callback_query_handler(
-#     func=filter_func,
-#     filter_input_date=input_date_callback_factory.filter(type='D')
-# )
-# def day_button(call: telebot.types.CallbackQuery) -> None:
-#     """
-#     Обработчик события нажатия на кнопку
-#
-#     :param call: telebot.types.CallbackQuery
-#     :return: None
-#
-#     """
-#     user: int = call.message.chat.id
-#     chat: int = call.message.chat.id
-#
-#     callback_data = input_date_callback_factory.parse(callback_data=call.data)
-#
-#     day = int(callback_data['content'])
-#
-#     old = call.message.text
-#     new = '{}{:02d}{}'.format(old[:-10], day, old[-8:])
-#     send_message_helper(bot.edit_message_text, retries=3)(
-#         chat_id=chat,
-#         message_id=call.message.message_id,
-#         text=new,
-#         parse_mode='HTML',
-#         reply_markup=keyboard_input_date()
-#     )
-
-#
-# @bot.callback_query_handler(
-#     func=filter_func,
-#     filter_input_date=input_date_callback_factory.filter(type='M')
-# )
-# def month_button(call: telebot.types.CallbackQuery) -> None:
-#     """
-#     Обработчик события нажатия на кнопку выбора страны
-#
-#     :param call: telebot.types.CallbackQuery
-#     :return: None
-#
-#     """
-#     user: int = call.message.chat.id
-#     chat: int = call.message.chat.id
-#
-#     callback_data = input_date_callback_factory.parse(callback_data=call.data)
-#
-#     month = int(callback_data['content'])
-#
-#     old = call.message.text
-#     new = '{}{:02d}{}'.format(old[:-7], month, old[-5:])
-#     send_message_helper(bot.edit_message_text, retries=3)(
-#         chat_id=chat,
-#         message_id=call.message.message_id,
-#         text=new,
-#         parse_mode='HTML',
-#         reply_markup=keyboard_input_date()
-#     )
-#
-#
-# @bot.callback_query_handler(
-#     func=filter_func,
-#     filter_input_date=input_date_callback_factory.filter(type='Y')
-# )
-# def year_button(call: telebot.types.CallbackQuery) -> None:
-#     """
-#     Обработчик события нажатия на кнопку выбора страны
-#
-#     :param call: telebot.types.CallbackQuery
-#     :return: None
-#
-#     """
-#     user: int = call.message.chat.id
-#     chat: int = call.message.chat.id
-#
-#     callback_data = input_date_callback_factory.parse(callback_data=call.data)
-#
-#     year = int(callback_data['content'])
-#
-#     old = call.message.text
-#     new = old[:-4] + str(year)
-#     send_message_helper(bot.edit_message_text, retries=3)(
-#         chat_id=chat,
-#         message_id=call.message.message_id,
-#         text=new,
-#         parse_mode='HTML',
-#         reply_markup=keyboard_input_date()
-#     )
+        return data['usd'].substate == LOWPRICE_SUBSTATES.SELECT_CHECKIN_DATE.value
 
 
 @bot.callback_query_handler(
@@ -144,19 +65,20 @@ def enter_button(call: telebot.types.CallbackQuery) -> None:
     Обработчик события нажатия на кнопку "готово"
 
     :param call: telebot.types.CallbackQuery
-    :return: None
 
     """
+    faulty_input_message: str = 'Некорректное значение даты. Пожалуйста, введите ещё раз'
+
     user: int = call.message.chat.id
     chat: int = call.message.chat.id
 
     #callback_data: Dict[str, str] = input_date_callback_factory.parse(callback_data=call.data)
     try:
         checkin_date = datetime.strptime(call.message.text[-10:], '%d.%m.%Y')
-    except ValueError:
-        reenter_date(call.message)
+    except ValueError as e:
+        console_message(str(e))
+        reenter_date(call.message, faulty_input_message)
         return
-
 
     # удаляем клавиатуру
     # if DELETE_OLD_KEYBOARDS:
@@ -167,7 +89,12 @@ def enter_button(call: telebot.types.CallbackQuery) -> None:
 
     # запоминаем информацию
     with bot.retrieve_data(user, chat) as data:
-        data['usd'].checkin_date = checkin_date
+        try:
+            data['usd'].checkin_date = checkin_date
+        except ValueError as e:
+            console_message(str(e))
+            reenter_date(call.message, str(e))
+            return
 
     # удаляем клавиатуру
     send_message_helper(bot.edit_message_text, retries=3)(
@@ -179,10 +106,9 @@ def enter_button(call: telebot.types.CallbackQuery) -> None:
     """ переходим к выбору даты выезда """
 
     # переходим в новое состояние
-    with bot.retrieve_data(user, chat) as data:
+    data: Dict[str, UserStateData]
+    with bot.retrieve_data(user_id=user, chat_id=chat) as data:
         data['usd'].substate = LOWPRICE_SUBSTATES.SELECT_CHECKOUT_DATE.value
 
     select_checkout_date(message=call.message)
-
-
 

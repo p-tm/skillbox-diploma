@@ -40,12 +40,13 @@ bot: TeleBot = TeleBot(token=BOT_TOKEN, state_storage=storage)
 # message filters
 bot.add_custom_filter(StateFilter(bot=bot))
 bot.add_custom_filter(IsDigitFilter())
-bot.add_custom_filter(IsCommandFilter())
+# bot.add_custom_filter(IsCommandFilter()) # TODO по-моему не нужно
 # следующие операции не получается вызвать здесь из-за circular reference
 # bot.add_custom_filter(MainMenuCallbackFilter())
 # bot.add_custom_filter(SelectCountryCallbackFilter())
 # bot.add_custom_filter(SelectCityCallbackFilter())
 # bot.add_custom_filter(YesNoCallbackFilter())
+# bot.add_custom_filter(InputDateCallbackFilter())
 
 try:
     init_ui(bot, retries=3)

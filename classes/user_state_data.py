@@ -1,8 +1,15 @@
-from datetime import datetime
+#import datetime
+
+from dataclasses import dataclass
+
+from classes.hotel import Hotel
+from classes.hotels import Hotels
+from datetime import datetime, timedelta
 from telebot import telebot
 from typing import *
 
 
+@dataclass
 class UserStateData:
     """
     Хранение данных (состояния) конкретного пользователя в конкретном чате
@@ -21,10 +28,14 @@ class UserStateData:
         self._photos_amount: int = None             # количество фото
         self._checkin_date: datetime = None
         self._checkout_date: datetime = None
+        self._nights: int = None
         self._keyboard_maker: Dict = {}             # информация о текущей используемой частичной клавиатуре
         self._messages_to_delete: telebot.types.Message = None     # если надо удалять более одного сообщения, то второе записывается сюда
         self._header_message: telebot.types.Message = None
         self._last_message: telebot.types.Message = None
+        self._max_checkout_date: datetime = None    # максимальная дата выезда
+        self._hotels: Hotels = Hotels()
+
 
         self.reinit_keyboard()
 
@@ -68,12 +79,23 @@ class UserStateData:
 
     def reinit_keyboard(self) -> None:
         """
-        Инициализация данных о частичной клавиатуре
+        Инициализация (сброс) данных о частичной клавиатуре
 
         """
         self._keyboard_maker['case'] = 'none'
         self._keyboard_maker['current'] = 0
         self._keyboard_maker['last'] = 0
+
+    def calculate_nights(self) -> bool:
+        """
+        Посчитать кол-во ночей
+
+        :return bool: True = кол-во ночей не превышает 28
+
+        """
+        diff: datetime.timedelta = self._checkout_date - self._checkin_date
+        self._nights = diff.days
+        return self._nights <= 28
 
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
     геттеры и сеттеры
@@ -133,7 +155,13 @@ class UserStateData:
 
     @checkin_date.setter
     def checkin_date(self, d):
-        self._checkin_date = d
+        today = datetime.now()
+        if d > today:
+            self._checkin_date = d
+        else:
+            raise ValueError('Дата заезда должна быть не ранее "завтрашнего" дня')
+
+        self._max_checkout_date = d + timedelta(days=+28)
 
     @property
     def checkout_date(self):
@@ -141,7 +169,14 @@ class UserStateData:
 
     @checkout_date.setter
     def checkout_date(self, d):
-        self._checkout_date = d
+        if d > self._checkin_date:
+            self._checkout_date = d
+        else:
+            raise ValueError('Дата выезда должна быть хотя бы на 1 день позже даты заезда')
+
+    @property
+    def nights(self):
+        return self._nights
 
     @property
     def message_to_delete(self):
@@ -168,8 +203,18 @@ class UserStateData:
         self._last_message = msg
 
     @property
+    def max_checkout_date(self):
+        return self._max_checkout_date
+
+    @property
+    def hotels(self):
+        return self._hotels
+
+    @property
     def keyboard_maker(self):
         return self._keyboard_maker
+
+
 
 
 
