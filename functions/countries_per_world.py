@@ -7,6 +7,7 @@ from classes.countries import Countries
 from classes.country import Country
 from exceptions.data_unavalible import DataUnavailible
 from functions.cashfile import cashfile
+from functions.get_raw_data import get_raw_data
 
 
 def countries_per_world(countries: Countries) -> None:
@@ -24,25 +25,14 @@ def countries_per_world(countries: Countries) -> None:
 
     """
     f_name: str = 'countries_raw.txt'
-    f_name = cashfile(f_name)
 
-    if not os.path.exists(f_name):
-
-        try:
-            countries_raw: List[Dict] = ApiCalls().get_countries_per_world()
-        except DataUnavailible:
-            raise
-
-        with open(f_name, 'w') as f_con:
-            f_con.write(str(countries_raw))
-    else:
-        with open(f_name, 'r') as f_con:
-            countries_raw = eval(f_con.read())
+    countries_raw: Dict[str, Any] = get_raw_data(
+        force=False,
+        fname=f_name,
+        func=ApiCalls().get_countries_per_world
+    )
 
     def add_country(item):
         countries[item['id']] = Country(item['id'], item['iso'], item['countryname'], item['nicename'])
-
-    # for item in countries_raw:
-    #     self.countries[item['id']] = Country(item['id'], item['iso'], item['countryname'], item['nicename'])
 
     [add_country(item) for item in countries_raw]

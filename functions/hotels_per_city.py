@@ -10,6 +10,7 @@ from classes.hotel import Hotel
 from classes.user_state_data import UserStateData
 from exceptions.data_unavalible import DataUnavailible
 from functions.cashfile import cashfile
+from functions.get_raw_data import get_raw_data
 from loader import bot, countries
 
 
@@ -33,59 +34,32 @@ def hotels_per_city(message: telebot.types.Message) -> None:
     city: City = country.cities[usd.selected_city_id]
 
     f_name: str = 'city_did_raw_' + country.iso + '_' + city.name + '.txt'
-    f_name: str = cashfile(f_name)
 
-    if not os.path.exists(f_name):
-
-        try:
-            locations_raw: Dict = ApiCalls().get_city_destination_id(city.name)
-        except DataUnavailible:
-            raise
-
-        f_did: Iterable[str]
-        with open(f_name, 'w', errors='replace') as f_did:
-            f_did.write(str(locations_raw))
-    else:
-        f_did: Iterable[str]
-        with open(f_name, 'r', errors='replace') as f_did:
-            locations_raw: Dict = eval(f_did.read())
+    locations_raw: Dict[str, Any] = get_raw_data(
+        force=False,
+        fname=f_name,
+        func=ApiCalls().get_city_destination_id,
+        city_name=city.name
+    )
 
     locations_list: List[Dict[str, str]] = locations_raw['suggestions'][0]['entities'] # "0" is for CITY_GROUP
 
-    # def add_destination_id(item: Dict[str, int]) -> None:
-    #     """
-    #     Добавляем destination_id в список
-    #
-    #     :param item: запись в словаре
-    #     """
-    #     city.add_did(item['destinationId'])
-
-    #[add_destination_id(item) for item in locations_list]
     item: Dict[str, int]
     [city.add_did(item['destinationId']) for item in locations_list]
 
     # теперь собственно для каждого отеля надо запросить детали
-    # чтобы запросить детали уже нужны вроде даты
-
     # тут надо каждый раз честно запрашивать, потому что
     # перечень возвращаемых отелей разный для разных юзеров
     # и даже для разных запросов одного юзера
 
     f_name = 'hotels_raw_' + country.iso + '_' + city.name + '.txt'
-    f_name = cashfile(f_name)
 
-    if not os.path.exists(f_name):
-
-        try:
-            hotels_raw: Dict = ApiCalls().get_hotels_per_city(usd)
-        except DataUnavailible:
-            raise
-
-        with open(f_name, 'w', errors='replace') as f_hot:
-            f_hot.write(str(hotels_raw))
-    else:
-        with open(f_name, 'r', errors='replace') as f_hot:
-            hotels_raw = eval(f_hot.read())
+    hotels_raw: Dict[str, Any] = get_raw_data(
+        force=True,
+        fname=f_name,
+        func=ApiCalls().get_hotels_per_city,
+        usd=usd
+    )
 
     hotels_list = hotels_raw['data']['body']['searchResults']['results']
 
@@ -95,7 +69,7 @@ def hotels_per_city(message: telebot.types.Message) -> None:
 
     usd.hotels.clear()
 
-    def add_hotel(item):
+    def add_hotel(item: Dict):
         hotel = Hotel(
             usd=usd,
             h_id=item['id'],
@@ -122,22 +96,13 @@ def hotels_per_city(message: telebot.types.Message) -> None:
             # то получают одно и то же
 
             f_name: str = 'photos_raw_' + country.iso + '_' + city.name + '_' + str(item.hotel_id) + '.txt'
-            f_name: str = cashfile(f_name)
 
-            if not os.path.exists(f_name):
-
-                try:
-                    photos_raw: Dict = ApiCalls().get_hotel_pictures(item.hotel_id)
-                except DataUnavailible:
-                    raise
-
-                f_pht: Iterable[str]
-                with open(f_name, 'w', errors='replace') as f_pht:
-                    f_pht.write(str(photos_raw))
-            else:
-                f_pht: Iterable[str]
-                with open(f_name, 'r', errors='replace') as f_pht:
-                    photos_raw: Dict = eval(f_pht.read())
+            photos_raw: Dict[str, Any] = get_raw_data(
+                force=False,
+                fname=f_name,
+                func=ApiCalls().get_hotel_pictures,
+                hotel_id=item.hotel_id
+            )
 
             photos_list: List[str] = photos_raw['hotelImages']
 
