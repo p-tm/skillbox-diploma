@@ -1,3 +1,5 @@
+import pickle
+
 from telebot import telebot
 from typing import *
 
@@ -5,6 +7,7 @@ from classes.hotel import Hotel
 from classes.user_state_data import UserStateData
 from commands.menu import menu
 from config import LOWPRICE_SUBSTATES
+from functions.print_results_data import print_results_data
 from functions.send_message_helper import send_message_helper
 from loader import bot
 
@@ -30,23 +33,11 @@ def show_results(message: telebot.types.Message) -> None:
     with bot.retrieve_data(chat_id=chat, user_id=user) as data:
         usd = data['usd']
 
-    keylist: List[int] = list(usd.hotels.keys())
+    print_results_data(message, usd)
 
-    key: int
-    for key in keylist:
-
-        send_message_helper(bot.send_message, retries=3)(
-            chat_id=chat,
-            text=usd.hotels[key].print_to_telegram(),
-            parse_mode='HTML',
-            disable_web_page_preview=True
-        )
-        ph: str
-        for ph in usd.hotels[key].images:
-            send_message_helper(bot.send_photo, retries=3)(
-                chat_id=chat,
-                photo=ph
-            )
+    """ логгирование """
+    bobj: 'binary_object' = pickle.dumps(usd)
+    usd.history.add_rec('RSLT', bobj.__str__())
 
     """ на этом процесс закончен, выдаём главное меню для новго выбора """
 

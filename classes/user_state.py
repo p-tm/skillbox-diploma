@@ -4,3 +4,5 @@ class UserState(StatesGroup):
     user_started_bot = State()
     user_selects_request = State()
     user_lowprice_in_progress = State()
+
+    user_history_in_progress = State()

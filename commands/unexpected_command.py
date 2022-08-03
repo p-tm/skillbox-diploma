@@ -1,4 +1,5 @@
 from telebot import telebot
+from typing import *
 
 from functions.send_message_helper import send_message_helper
 from loader import bot
@@ -17,6 +18,11 @@ def unexpected_command(message: telebot.types.Message) -> None:
                                     'Если Вы хотите остановить выполнение текущей команды, введите "/stop"')
     user: int = message.chat.id
     chat: int = message.chat.id
+
+    """  логгирование """
+    data: Dict[str, Any]
+    with bot.retrieve_data(user_id=user, chat_id=chat) as data:
+        data['usd'].history.add_rec('UCMD', '\"' + message.text + '\"')
 
     send_message_helper(bot.send_message, retries=3)(
         chat_id=chat,

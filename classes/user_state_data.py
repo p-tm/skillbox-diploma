@@ -1,12 +1,14 @@
-#import datetime
-
-from dataclasses import dataclass
-
-from classes.hotel import Hotel
-from classes.hotels import Hotels
 from datetime import datetime, timedelta
 from telebot import telebot
 from typing import *
+
+
+from dataclasses import dataclass
+
+
+from classes.hotel import Hotel
+from classes.hotels import Hotels
+
 
 
 @dataclass
@@ -20,6 +22,8 @@ class UserStateData:
         Конструктор
 
         """
+        from classes.history_log import HistoryLog
+
         self._substate: int = None                  # текущее состояние внутри основного
         self._selected_country_id: int = None       # id выбранной страны (берётся из удалённого запроса)
         self._selected_city_id: int = None          # id выбранного города (берётся из удалённого запроса)
@@ -35,6 +39,7 @@ class UserStateData:
         self._last_message: telebot.types.Message = None
         self._max_checkout_date: datetime = None    # максимальная дата выезда
         self._hotels: Hotels = Hotels()
+        self.history = HistoryLog()
 
 
         self.reinit_keyboard()
@@ -96,6 +101,48 @@ class UserStateData:
         diff: datetime.timedelta = self._checkout_date - self._checkin_date
         self._nights = diff.days
         return self._nights <= 28
+
+    def summary(self, *, history: Optional[bool] = False) -> str:
+        """
+        Формирует текст сообщения для show_summary()
+
+        :return: текст сообщения
+
+        """
+
+        from loader import countries
+
+        country_key = self._selected_country_id
+        city_key = self._selected_city_id
+
+        if not history:
+            tmp = 'Итак, Ваши критерии поиска:\n\n'
+        else:
+            tmp = 'Итоговые критерии поиска:\n\n'
+
+        summary_message: str = (
+            tmp +
+            '<i>Страна:</i> {}\n'
+            '<i>Город:</i> {}\n'
+            '<i>Дата заезда:</i> {}\n'
+            '<i>Дата выезда:</i> {}\n'
+            '<i>Количество ночей:</i> {}\n'
+            '<i>Количество отелей:</i> {}\n'
+            '<i>Показывать фото:</i> {}'
+        ).format(
+            countries[country_key].nicename,
+            countries[country_key].cities[city_key].name,
+            self._checkin_date.strftime('%d.%m.%Y'),
+            self._checkout_date.strftime('%d.%m.%Y'),
+            self._nights,
+            self._hotels_amount,
+            'Да' if self._photo_required else 'Нет'
+        )
+
+        if self._photo_required:
+            summary_message += '\n<i>Количество фото:</i> {}'.format(self._photos_amount)
+
+        return summary_message
 
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
     геттеры и сеттеры

@@ -1,4 +1,5 @@
 from telebot import telebot
+from typing import *
 
 from classes.user_state import UserState
 from commands.menu import menu
@@ -16,6 +17,11 @@ def stop(message: telebot.types.Message) -> None:
     """
     user: int = message.chat.id
     chat: int = message.chat.id
+
+    """  логгирование """
+    data: Dict[str, Any]
+    with bot.retrieve_data(user_id=user, chat_id=chat) as data:
+        data['usd'].history.add_rec('UCMD', '/stop')
 
     # здесь нужно удалить два сообщений
     # if DELETE_OLD_KEYBOARDS:

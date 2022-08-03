@@ -56,10 +56,11 @@ def lowprice(message: telebot.types.Message) -> None:
         text=lowprice_started_message
     )
 
-    data: Dict
+    data: Dict[str, Any]
     with bot.retrieve_data(user, chat) as data:
         data['usd'].header_message = msg
         data['usd'].substate = LOWPRICE_SUBSTATES.SELECT_COUNTRY.value
 
-    st = storage
+    data['usd'].history.add_rec('UCMD', '/lowprice')
+
     select_country(message=message)

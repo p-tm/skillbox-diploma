@@ -23,48 +23,49 @@ def show_summary(message: telebot.types.Message) -> None:
     chat: int = message.chat.id
 
     with bot.retrieve_data(user_id=user, chat_id=chat) as data:
+        summary_message: str = data['usd'].summary()
 
-        country_key = data['usd'].selected_country_id
-        city_key = data['usd'].selected_city_id
-
-        resume_message: str = (
-            'Итак, Ваши критерии поиска:\n\n'
-            '<i>Страна:</i> {}\n'
-            '<i>Город:</i> {}\n'
-            '<i>Дата заезда:</i> {}\n'
-            '<i>Дата выезда:</i> {}\n'
-            '<i>Количество ночей:</i> {}\n'
-            '<i>Количество отелей:</i> {}\n'
-            '<i>Показывать фото:</i> {}'
-        )
-
-        out: str = resume_message.format(
-            countries[country_key].nicename,
-            countries[country_key].cities[city_key].name,
-            data['usd'].checkin_date.strftime('%d.%m.%Y'),
-            data['usd'].checkout_date.strftime('%d.%m.%Y'),
-            data['usd'].nights,
-            data['usd'].hotels_amount,
-            'Да' if data['usd'].photo_required else 'Нет'
-        )
-
-        if data['usd'].hotels_amount:
-            resume_message += '\n<i>Количество фото:</i> {}'
-
-            out: str = resume_message.format(
-                countries[country_key].nicename,
-                countries[country_key].cities[city_key].name,
-                data['usd'].checkin_date.strftime('%d.%m.%Y'),
-                data['usd'].checkout_date.strftime('%d.%m.%Y'),
-                data['usd'].nights,
-                data['usd'].hotels_amount,
-                'Да' if data['usd'].photo_required else 'Нет',
-                data['usd'].photos_amount
-            )
+        # country_key = data['usd'].selected_country_id
+        # city_key = data['usd'].selected_city_id
+        #
+        # resume_message: str = (
+        #     'Итак, Ваши критерии поиска:\n\n'
+        #     '<i>Страна:</i> {}\n'
+        #     '<i>Город:</i> {}\n'
+        #     '<i>Дата заезда:</i> {}\n'
+        #     '<i>Дата выезда:</i> {}\n'
+        #     '<i>Количество ночей:</i> {}\n'
+        #     '<i>Количество отелей:</i> {}\n'
+        #     '<i>Показывать фото:</i> {}'
+        # )
+        #
+        # out: str = resume_message.format(
+        #     countries[country_key].nicename,
+        #     countries[country_key].cities[city_key].name,
+        #     data['usd'].checkin_date.strftime('%d.%m.%Y'),
+        #     data['usd'].checkout_date.strftime('%d.%m.%Y'),
+        #     data['usd'].nights,
+        #     data['usd'].hotels_amount,
+        #     'Да' if data['usd'].photo_required else 'Нет'
+        # )
+        #
+        # if data['usd'].photo_required:
+        #     resume_message += '\n<i>Количество фото:</i> {}'
+        #
+        #     out: str = resume_message.format(
+        #         countries[country_key].nicename,
+        #         countries[country_key].cities[city_key].name,
+        #         data['usd'].checkin_date.strftime('%d.%m.%Y'),
+        #         data['usd'].checkout_date.strftime('%d.%m.%Y'),
+        #         data['usd'].nights,
+        #         data['usd'].hotels_amount,
+        #         'Да' if data['usd'].photo_required else 'Нет',
+        #         data['usd'].photos_amount
+        #     )
 
     msg: telebot.types.Message = send_message_helper(bot.send_message, retries=3)(
         chat_id=chat,
-        text=out,
+        text=summary_message,
         parse_mode='HTML'
     )
 

@@ -19,7 +19,6 @@ def init_ui(bot: telebot.TeleBot, *, retries: Optional[int] = 1) -> None:
 
     :param bot - инстанс бота
     :param retries: Optional[int] - число попыток
-    :return: None
 
     """
     _tries_counter = 1
@@ -31,7 +30,8 @@ def init_ui(bot: telebot.TeleBot, *, retries: Optional[int] = 1) -> None:
                 #BotCommand('/menu', 'Вызов меню команд'),
                 BotCommand('/stop', 'Прервать текущий запрос'),
                 BotCommand('/lowprice', 'Подобрать самые дешёвые отели'),
-                BotCommand('/highprice', 'Подобрать самые дорогие отели')
+                BotCommand('/highprice', 'Подобрать самые дорогие отели'),
+                BotCommand('/history', 'Посмотреть историю поиска')
             ])
             return
         except exceptions.ConnectionError as e:

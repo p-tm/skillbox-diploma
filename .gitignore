@@ -8,3 +8,5 @@ cities_raw_*.*
 city_did_raw_*.*
 hotels_raw_*.*
 photos_raw_*.*
+*.log
+

@@ -11,6 +11,7 @@ from classes.user_state_data import UserStateData
 from exceptions.data_unavalible import DataUnavailible
 from functions.cashfile import cashfile
 from functions.get_raw_data import get_raw_data
+from config import GET_HOTELS_FROM_SERVER
 from loader import bot, countries
 
 
@@ -55,7 +56,7 @@ def hotels_per_city(message: telebot.types.Message) -> None:
     f_name = 'hotels_raw_' + country.iso + '_' + city.name + '.txt'
 
     hotels_raw: Dict[str, Any] = get_raw_data(
-        force=True,
+        force=GET_HOTELS_FROM_SERVER,
         fname=f_name,
         func=ApiCalls().get_hotels_per_city,
         usd=usd

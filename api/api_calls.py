@@ -6,7 +6,7 @@ from requests import request, exceptions
 from requests.models import Response
 from typing import *
 
-from classes.user_state_data import UserStateData
+
 from config import COUNTRIES_API_HEADERS, CITIES_API_HEADERS, HOTELS_API_HEADERS
 from exceptions.fatal_error import FatalError
 from exceptions.data_unavalible import DataUnavailible
@@ -118,7 +118,7 @@ class ApiCalls:
 
         return location_dict
 
-    def get_hotels_per_city(self, usd: UserStateData) -> Dict:
+    def get_hotels_per_city(self, usd: 'UserStateData') -> Dict:
         """
         Получает перечень отелей в выбранном городе через API-call
         API-call может сам возвращает заданное кол-во отелей

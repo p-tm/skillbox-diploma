@@ -6,6 +6,7 @@ MAX_KEYS_PER_KEYBOARD = 30      # количество кнопок на час�
 DELETE_OLD_KEYBOARDS = True     # True = удалять предыдущую частичную клавиатуру
 MAX_HOTELS_AMOUNT = 20          # максимальное количество отелей (сервер может отдать максимум 25)
 MAX_PHOTOS_AMOUNT = 5            # сервер отдаёт сразу всё, поэтому ограничение - надо проверять, что пришло с сервера
+GET_HOTELS_FROM_SERVER = False
 
 COUNTRIES_API_HEADERS = {
     "X-RapidAPI-Key": "fba64e5cf9msh04aa44d741bf7c4p107cf8jsn92e55fbb6b9f",
@@ -44,7 +45,7 @@ MAIN_MENU_BUTTONS = [
     {'id': MAIN_MENU_COMMANDS.LOWPRICE.value, 'caption': '✨  Подобрать самые дешёвые отели'},
     {'id': MAIN_MENU_COMMANDS.NONE.value, 'caption': '💲  Подобрать самые дорогие отели'},
     {'id': MAIN_MENU_COMMANDS.NONE.value, 'caption': '👍  Подобрать самые подходящие отели'},
-    {'id': MAIN_MENU_COMMANDS.NONE.value, 'caption': '📜  Посмотреть историю поиска'},
+    {'id': MAIN_MENU_COMMANDS.HISTORY.value, 'caption': '📜  Посмотреть историю поиска'},
     {'id': MAIN_MENU_COMMANDS.NONE.value, 'caption': 'ℹ  Получить справку о работе с ботом'}
 ]
 
