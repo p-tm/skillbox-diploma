@@ -1,5 +1,9 @@
+"""
+Неизвестная или недопустимая команда
+
+"""
 from telebot import telebot
-from typing import *
+from typing import Any, Dict
 
 from functions.send_message_helper import send_message_helper
 from loader import bot
@@ -14,15 +18,22 @@ def unexpected_command(message: telebot.types.Message) -> None:
     :param message:
 
     """
-    unknown_command_message: str = ('Неизвестная или недопустимая команда.\n'
-                                    'Если Вы хотите остановить выполнение текущей команды, введите "/stop"')
+    unknown_command_message: str = (
+        'Неизвестная или недопустимая команда.\n'
+        'Если Вы хотите остановить выполнение текущей команды,'
+        'введите "/stop"'
+    )
     user: int = message.chat.id
     chat: int = message.chat.id
+
+    check_state: str = bot.get_state(user_id=user, chat_id=chat)
+    if check_state is None:
+        return
 
     """  логгирование """
     data: Dict[str, Any]
     with bot.retrieve_data(user_id=user, chat_id=chat) as data:
-        data['usd'].history.add_rec('UCMD', '\"' + message.text + '\"')
+        data['usd'].history.add_rec('UCMD', '\"' + message.text + '\" (неизвестная или недопустимая команда)')
 
     send_message_helper(bot.send_message, retries=3)(
         chat_id=chat,
@@ -31,6 +42,7 @@ def unexpected_command(message: telebot.types.Message) -> None:
 
     # вытаскиваем предыдущее сообщение (до неизвестной команды)
     # и дублируем его
+    data: Dict[str, Any]
     with bot.retrieve_data(user_id=user, chat_id=chat) as data:
         msg = data['usd'].last_message
 

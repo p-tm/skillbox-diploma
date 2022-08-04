@@ -1,13 +1,17 @@
+"""
+Команда "/history"
+
+"""
 from telebot import telebot
-from typing import *
+from typing import Any, Dict
 
 from classes.user_state import UserState
 from classes.user_state_data import UserStateData
 from commands.menu import menu, main_menu_buttons_callback_factory
-from config import DELETE_OLD_KEYBOARDS, MAIN_MENU_COMMANDS, LOWPRICE_SUBSTATES
+from config import DELETE_OLD_KEYBOARDS, MainMenuCommands
 from functions.print_results_data import print_results_data
 from functions.send_message_helper import send_message_helper
-from loader import bot, storage
+from loader import bot
 
 @bot.message_handler(
     state=[UserState.user_selects_request],
@@ -25,7 +29,7 @@ def history_text(message: telebot.types.Message) -> None:
 @bot.callback_query_handler(
     func=None,
     state=[UserState.user_selects_request],
-    filter_main_menu=main_menu_buttons_callback_factory.filter(cmd_id=str(MAIN_MENU_COMMANDS.HISTORY.value))
+    filter_main_menu=main_menu_buttons_callback_factory.filter(cmd_id=str(MainMenuCommands.HISTORY.value))
 )
 def history_button(call: telebot.types.CallbackQuery) -> None:
     """

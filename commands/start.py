@@ -1,5 +1,8 @@
+"""
+Команда "/start"
+
+"""
 from telebot import telebot
-from typing import *
 
 from classes.user_state import UserState
 from classes.user_state_data import UserStateData
@@ -62,5 +65,3 @@ def start(message: telebot.types.Message) -> None:
         #     )
         # except exceptions.ReadTimeout:
         #     raise
-
-

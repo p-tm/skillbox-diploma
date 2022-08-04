@@ -1,46 +1,62 @@
+"""
+Описание класса
+
+"""
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from telebot import telebot
-from typing import *
+from typing import Dict, Optional, Tuple, Union
 
-
-from dataclasses import dataclass
-
-
-from classes.hotel import Hotel
 from classes.hotels import Hotels
-
 
 
 @dataclass
 class UserStateData:
     """
     Хранение данных (состояния) конкретного пользователя в конкретном чате
+    Инкапсулирует все данные, индивидуальные для пользователя (перечень выбранных отелей и т.п.)
 
     """
-    def __init__(self):
+    _substate: Optional[int]                        # текущее состояние (суб-состояние, внутри основного)
+    _selected_country_id: Optional[int]             # id выбранной страны (берётся из удалённого запроса)
+    _selected_city_id: Optional[int]                # id выбранного города (берётся из удалённого запроса)
+    _hotels_amount: Optional[int]                   # количество отелей
+    _photo_required: Optional[bool]                 # требуется ли фотография
+    _photos_amount: Optional[int]                   # количество фото
+    _checkin_date: Optional[datetime]               # дата заезда
+    _checkout_date: Optional[datetime]              # дата выезда
+    _nights: Optional[int]                          # количество ночей
+    _keyboard_maker: Dict[str, Union[str, int]]     # информация о текущей используемой частичной клавиатуре
+    _messages_to_delete: Optional[telebot.types.Message]   # сообщение, которые впоследствие надо удалить
+    _header_message: Optional[telebot.types.Message]       # логический заголовок
+    _last_message: Optional[telebot.types.Message]  # последнее сообщение
+    _max_checkout_date: Optional[datetime]          # максимальная дата выезда
+    _hotels: Hotels                                 # перечень выбранных отелей
+    history: 'HistoryLog'                           # логгер
+
+    def __init__(self) -> None:
         """
         Конструктор
 
         """
         from classes.history_log import HistoryLog
 
-        self._substate: int = None                  # текущее состояние внутри основного
-        self._selected_country_id: int = None       # id выбранной страны (берётся из удалённого запроса)
-        self._selected_city_id: int = None          # id выбранного города (берётся из удалённого запроса)
-        self._hotels_amount: int = None             # количество отелей
-        self._photo_required: bool = None           # требуется ли фотография
-        self._photos_amount: int = None             # количество фото
-        self._checkin_date: datetime = None
-        self._checkout_date: datetime = None
-        self._nights: int = None
-        self._keyboard_maker: Dict = {}             # информация о текущей используемой частичной клавиатуре
-        self._messages_to_delete: telebot.types.Message = None     # если надо удалять более одного сообщения, то второе записывается сюда
-        self._header_message: telebot.types.Message = None
-        self._last_message: telebot.types.Message = None
-        self._max_checkout_date: datetime = None    # максимальная дата выезда
+        self._substate = None
+        self._selected_country_id = None
+        self._selected_city_id = None
+        self._hotels_amount = None
+        self._photo_required = None
+        self._photos_amount = None
+        self._checkin_date = None
+        self._checkout_date = None
+        self._nights = None
+        self._keyboard_maker = {}
+        self._messages_to_delete = None
+        self._header_message = None
+        self._last_message = None
+        self._max_checkout_date = None
         self._hotels: Hotels = Hotels()
         self.history = HistoryLog()
-
 
         self.reinit_keyboard()
 
@@ -98,7 +114,7 @@ class UserStateData:
         :return bool: True = кол-во ночей не превышает 28
 
         """
-        diff: datetime.timedelta = self._checkout_date - self._checkin_date
+        diff: timedelta = self._checkout_date - self._checkin_date
         self._nights = diff.days
         return self._nights <= 28
 
@@ -260,8 +276,3 @@ class UserStateData:
     @property
     def keyboard_maker(self):
         return self._keyboard_maker
-
-
-
-
-

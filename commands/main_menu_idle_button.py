@@ -1,16 +1,19 @@
+"""
+Команда от кнопки на которую назначена команда MainMenuCommands.NONE (используется для отладки)
+
+"""
 from telebot import telebot
-from typing import *
 
 from classes.user_state import UserState
-from config import MAIN_MENU_COMMANDS
+from config import MainMenuCommands
 from loader import bot, main_menu_buttons_callback_factory
+
 
 @bot.callback_query_handler(
     func=None,
     state=[UserState.user_selects_request],
-    filter_main_menu=main_menu_buttons_callback_factory.filter(cmd_id=str(MAIN_MENU_COMMANDS.NONE.value))
+    filter_main_menu=main_menu_buttons_callback_factory.filter(cmd_id=str(MainMenuCommands.NONE.value))
 )
-# @bot.callback_query_handler(func=None)
 def main_menu_idle_button(call: telebot.types.CallbackQuery) -> None:
     """
     Обработчик нажатий "пустых" кнопок главного меню

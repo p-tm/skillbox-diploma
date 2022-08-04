@@ -1,11 +1,15 @@
+"""
+Реализация шага по выбору даты заезда
+
+"""
 from datetime import datetime
 
 from telebot import telebot
-from typing import *
+from typing import Dict
 
 from classes.user_state_data import UserStateData
 from commands.select_checkout_date import select_checkout_date
-from config import DELETE_OLD_KEYBOARDS, LOWPRICE_SUBSTATES
+from config import DELETE_OLD_KEYBOARDS, HighpriceSubstates, LowpriceSubstates
 from functions import keyboard_input_date
 from functions.console_message import console_message
 from functions.send_message_helper import send_message_helper
@@ -51,10 +55,20 @@ def filter_func(call: telebot.types.CallbackQuery) -> bool:
     user: int = call.message.chat.id
     chat: int = call.message.chat.id
 
+    check_state: str = bot.get_state(user_id=user, chat_id=chat)
+    if check_state is None:
+        return False
+
+    user_state: str = check_state.split(':')[1]
+
     data: Dict[str, UserStateData]
     with bot.retrieve_data(user, chat) as data:
-        return data['usd'].substate == LOWPRICE_SUBSTATES.SELECT_CHECKIN_DATE.value
+        if user_state == 'user_lowprice_in_progress':
+            return data['usd'].substate == LowpriceSubstates.SELECT_CHECKIN_DATE.value
+        elif user_state == 'user_highprice_in_progress':
+            return data['usd'].substate == HighpriceSubstates.SELECT_CHECKIN_DATE.value
 
+    return False
 
 @bot.callback_query_handler(
     func=filter_func,
@@ -71,6 +85,8 @@ def enter_button(call: telebot.types.CallbackQuery) -> None:
 
     user: int = call.message.chat.id
     chat: int = call.message.chat.id
+
+    user_state: str = bot.get_state(user_id=user, chat_id=chat).split(':')[1]
 
     #callback_data: Dict[str, str] = input_date_callback_factory.parse(callback_data=call.data)
     try:
@@ -108,7 +124,10 @@ def enter_button(call: telebot.types.CallbackQuery) -> None:
     # переходим в новое состояние
     data: Dict[str, UserStateData]
     with bot.retrieve_data(user_id=user, chat_id=chat) as data:
-        data['usd'].substate = LOWPRICE_SUBSTATES.SELECT_CHECKOUT_DATE.value
+        if user_state == 'user_lowprice_in_progress':
+            data['usd'].substate = LowpriceSubstates.SELECT_CHECKOUT_DATE.value
+        elif user_state == 'user_highprice_in_progress':
+            data['usd'].substate = HighpriceSubstates.SELECT_CHECKOUT_DATE.value
 
     select_checkout_date(message=call.message)
 

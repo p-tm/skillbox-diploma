@@ -1,6 +1,11 @@
+"""
+Реализация шага по выбору страны
+
+"""
 import math
 
 from telebot import telebot
+from telebot.handler_backends import State, StatesGroup
 from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
 from telebot.callback_data import CallbackData, CallbackDataFilter
 from telebot.custom_filters import AdvancedCustomFilter, SimpleCustomFilter
@@ -10,7 +15,7 @@ from classes.user_state import UserState
 from classes.user_state_data import UserStateData
 from classes.countries import Countries
 from commands.select_city import select_city
-from config import DELETE_OLD_KEYBOARDS, LOWPRICE_SUBSTATES, MAX_KEYS_PER_KEYBOARD
+from config import DELETE_OLD_KEYBOARDS, HighpriceSubstates, LowpriceSubstates, MAX_KEYS_PER_KEYBOARD
 from exceptions.data_unavalible import DataUnavailible
 from functions.cities_per_country import cities_per_country
 from functions.console_message import console_message
@@ -34,8 +39,12 @@ class SelectCountryCallbackFilter(AdvancedCustomFilter):
         """
         user = call.message.chat.id
         chat = call.message.chat.id
+        user_state: str = bot.get_state(user_id=user, chat_id=chat).split(':')[1]
         with bot.retrieve_data(user, chat) as data:
-            is_select_country = data['usd'].substate == LOWPRICE_SUBSTATES.SELECT_COUNTRY.value
+            if user_state == 'user_lowprice_in_progress':
+                is_select_country = data['usd'].substate == LowpriceSubstates.SELECT_COUNTRY.value
+            elif user_state == 'user_highprice_in_progress':
+                is_select_country = data['usd'].substate == HighpriceSubstates.SELECT_COUNTRY.value
         return is_select_country and config.check(query=call)
 
 
@@ -71,7 +80,10 @@ def keyboard_select_country(countries: Countries, current: Optional[int] = 1) ->
     if not current == number_of_keyboards:
         buttons.append(
             [
-                InlineKeyboardButton(text='ещё...', callback_data=select_country_buttons_callback_factory.new(cmd_id='keyboard_next_part'))
+                InlineKeyboardButton(
+                    text='ещё...',
+                    callback_data=select_country_buttons_callback_factory.new(cmd_id='keyboard_next_part')
+                )
             ]
         )
 
@@ -111,7 +123,7 @@ def select_country(message: telebot.types.Message, kbrd: Optional[int] = 1) -> N
 
 @bot.callback_query_handler(
     func=None,
-    state=[UserState.user_lowprice_in_progress],
+    state=[UserState.user_lowprice_in_progress, UserState.user_highprice_in_progress],
     filter_select_country=select_country_buttons_callback_factory.filter(cmd_id=['keyboard_next_part'])
 )
 def next_part_of_keyboard(call: telebot.types.CallbackQuery) -> None:
@@ -138,7 +150,7 @@ def next_part_of_keyboard(call: telebot.types.CallbackQuery) -> None:
 
 @bot.callback_query_handler(
     func=None,
-    state=[UserState.user_lowprice_in_progress],
+    state=[UserState.user_lowprice_in_progress, UserState.user_highprice_in_progress],
     filter_select_country=select_country_buttons_callback_factory.filter()
 )
 def country_selector_button(call: telebot.types.CallbackQuery) -> None:
@@ -150,6 +162,8 @@ def country_selector_button(call: telebot.types.CallbackQuery) -> None:
     """
     user: int = call.message.chat.id
     chat: int = call.message.chat.id
+
+    user_state: str = bot.get_state(user_id=user, chat_id=chat).split(':')[1]
 
     callback_data: Dict[str, str] = select_country_buttons_callback_factory.parse(callback_data=call.data)
 
@@ -169,7 +183,10 @@ def country_selector_button(call: telebot.types.CallbackQuery) -> None:
 
     # новое состояние
     with bot.retrieve_data(user, chat) as data:
-        data['usd'].substate = LOWPRICE_SUBSTATES.SELECT_CITY.value
+        if user_state == 'user_lowprice_in_progress':
+            data['usd'].substate = LowpriceSubstates.SELECT_CITY.value
+        elif user_state == 'user_highprice_in_progress':
+            data['usd'].substate = HighpriceSubstates.SELECT_CITY.value
 
     # запрашиваем список городов в стране (удалённый запрос)
     try:

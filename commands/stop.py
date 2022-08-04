@@ -1,9 +1,13 @@
+"""
+Реализация команды "/stop"
+
+"""
 from telebot import telebot
-from typing import *
+from typing import Any, Dict
 
 from classes.user_state import UserState
 from commands.menu import menu
-from config import DELETE_OLD_KEYBOARDS
+from config import DELETE_OLD_KEYBOARDS, SUBSTATE_NONE
 from functions.send_message_helper import send_message_helper
 from loader import bot
 
@@ -52,8 +56,6 @@ def stop(message: telebot.types.Message) -> None:
 
     with bot.retrieve_data(user_id=user, chat_id=chat) as data:
         data['usd'].reinit_keyboard()
-        data['usd'].substate = 0
+        data['usd'].substate = SUBSTATE_NONE
 
     menu(message=message)
-
-

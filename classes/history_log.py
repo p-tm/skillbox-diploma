@@ -1,3 +1,7 @@
+"""
+Описание класса
+
+"""
 from dataclasses import dataclass
 from typing import *
 from classes.log_record import LogRecord

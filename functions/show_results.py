@@ -6,7 +6,7 @@ from typing import *
 from classes.hotel import Hotel
 from classes.user_state_data import UserStateData
 from commands.menu import menu
-from config import LOWPRICE_SUBSTATES
+from config import LowpriceSubstates, SUBSTATE_NONE
 from functions.print_results_data import print_results_data
 from functions.send_message_helper import send_message_helper
 from loader import bot
@@ -48,8 +48,8 @@ def show_results(message: telebot.types.Message) -> None:
         text=horiz_delimiter
     )
 
-    # переходим в новое состояние
-    with bot.retrieve_data(user, chat) as data:
-        data['usd'].substate = LOWPRICE_SUBSTATES.NONE.value
+    # # переходим в новое состояние
+    # with bot.retrieve_data(user, chat) as data:
+    #     data['usd'].substate = SUBSTATE_NONE
 
     menu(message=message)

@@ -1,12 +1,16 @@
-from typing import *
+"""
+Главное меню (выбор основной команды)
+
+"""
 from requests import exceptions
 from telebot import telebot
 from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
 from telebot.callback_data import CallbackData, CallbackDataFilter
 from telebot.custom_filters import AdvancedCustomFilter, SimpleCustomFilter, StateFilter
+from typing import Any
 
 from classes.user_state import UserState
-from config import MAIN_MENU_COMMANDS, MAIN_MENU_BUTTONS
+from config import MainMenuCommands, MAIN_MENU_BUTTONS, SUBSTATE_NONE
 from functions.send_message_helper import send_message_helper
 from loader import bot, storage, main_menu_buttons_callback_factory
 
@@ -39,7 +43,6 @@ def keyboard_select_main_cmd() -> telebot.types.InlineKeyboardMarkup:
         ]
         for button in MAIN_MENU_BUTTONS
     ]
-
     return InlineKeyboardMarkup(buttons)
 
 
@@ -54,7 +57,12 @@ def menu(message: telebot.types.Message) -> None:
     """
     user: int = message.chat.id
     chat: int = message.chat.id
+
+    # "исходное" состояние - демонстрируется главное меню
     bot.set_state(user_id=user, state=UserState.user_selects_request, chat_id=chat)
+    data: Dict[str, Any]
+    with bot.retrieve_data(user_id=user, chat_id=chat) as data:
+        data['usd'].substate = SUBSTATE_NONE
 
     kbrd_select_main_cmd: telebot.types.InlineKeyboardMarkup = keyboard_select_main_cmd()
 
@@ -65,11 +73,7 @@ def menu(message: telebot.types.Message) -> None:
         reply_markup=kbrd_select_main_cmd
     )
 
-    with bot.retrieve_data(user, chat) as data:
+    data: Dict[str, Any]
+    with bot.retrieve_data(user_id=user, chat_id=chat) as data:
     #    data['usd'].message_to_delete = msg
         data['usd'].last_message = msg
-
-
-
-
-

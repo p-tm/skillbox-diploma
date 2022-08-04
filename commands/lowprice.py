@@ -1,13 +1,16 @@
+"""
+Команда "/lowprice"
+
+"""
 from telebot import telebot
-from telebot.storage.base_storage import StateContext
-from typing import *
+from typing import Any, Dict
 
 from classes.user_state import UserState
 from commands.menu import main_menu_buttons_callback_factory
 from commands.select_country import select_country
-from config import DELETE_OLD_KEYBOARDS, MAIN_MENU_COMMANDS, LOWPRICE_SUBSTATES
+from config import DELETE_OLD_KEYBOARDS, MainMenuCommands, LowpriceSubstates
 from functions.send_message_helper import send_message_helper
-from loader import bot, storage
+from loader import bot
 
 
 @bot.message_handler(
@@ -21,13 +24,13 @@ def lowprice_text(message: telebot.types.Message) -> None:
     :param message: предыдущее сообщение в чате Telegram
 
     """
-    lowprice(message)
+    lowprice(message=message)
 
 
 @bot.callback_query_handler(
     func=None,
     state=[UserState.user_selects_request],
-    filter_main_menu=main_menu_buttons_callback_factory.filter(cmd_id=str(MAIN_MENU_COMMANDS.LOWPRICE.value))
+    filter_main_menu=main_menu_buttons_callback_factory.filter(cmd_id=str(MainMenuCommands.LOWPRICE.value))
 )
 def lowprice_button(call: telebot.types.CallbackQuery) -> None:
     """
@@ -36,7 +39,7 @@ def lowprice_button(call: telebot.types.CallbackQuery) -> None:
     :param call: сообщение от кнопки
 
     """
-    lowprice(call.message)
+    lowprice(message=call.message)
 
 
 def lowprice(message: telebot.types.Message) -> None:
@@ -59,7 +62,7 @@ def lowprice(message: telebot.types.Message) -> None:
     data: Dict[str, Any]
     with bot.retrieve_data(user, chat) as data:
         data['usd'].header_message = msg
-        data['usd'].substate = LOWPRICE_SUBSTATES.SELECT_COUNTRY.value
+        data['usd'].substate = LowpriceSubstates.SELECT_COUNTRY.value
 
     data['usd'].history.add_rec('UCMD', '/lowprice')
 

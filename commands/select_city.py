@@ -1,21 +1,23 @@
+"""
+Реализация шага по выбору города
+
+"""
 import math
 
 from telebot import telebot
-from telebot.types import Message
 from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
 from telebot.callback_data import CallbackData, CallbackDataFilter
 from telebot.custom_filters import AdvancedCustomFilter, SimpleCustomFilter
-from typing import *
+from typing import Dict, Optional, Tuple
 
-from classes.cities import Cities
 from classes.user_state import UserState
 from classes.user_state_data import UserStateData
 from commands.select_hotels_amount import select_hotels_amount
-from config import DELETE_OLD_KEYBOARDS, LOWPRICE_SUBSTATES, MAX_KEYS_PER_KEYBOARD
+from config import DELETE_OLD_KEYBOARDS, HighpriceSubstates, LowpriceSubstates, MAX_KEYS_PER_KEYBOARD
 
 from functions.send_message_helper import send_message_helper
 
-from loader import bot, countries, storage, select_city_buttons_callback_factory
+from loader import bot, countries, select_city_buttons_callback_factory
 
 
 # select_city_buttons_callback_factory = CallbackData('cmd_id', prefix='city')
@@ -33,11 +35,20 @@ class SelectCityCallbackFilter(AdvancedCustomFilter):
         Функция фильтрации
 
         """
-        user = call.message.chat.id
-        chat = call.message.chat.id
-        with bot.retrieve_data(user, chat) as data:
-            is_select_country = data['usd'].substate == LOWPRICE_SUBSTATES.SELECT_CITY.value
-        return is_select_country and config.check(query=call)
+        user: int = call.message.chat.id
+        chat: int = call.message.chat.id
+        user_state: str = bot.get_state(user_id=user, chat_id=chat).split(':')[1]
+        data: Dict[str, Any]
+        is_select_city: bool
+        with bot.retrieve_data(user_id=user, chat_id=chat) as data:
+            if user_state == 'user_lowprice_in_progress':
+                is_select_city = data['usd'].substate == LowpriceSubstates.SELECT_CITY.value
+            elif user_state == 'user_highprice_in_progress':
+                is_select_city = data['usd'].substate == HighpriceSubstates.SELECT_CITY.value
+            else:
+                is_select_city = False
+
+        return is_select_city and config.check(query=call)
 
 
 bot.add_custom_filter(SelectCityCallbackFilter())
@@ -111,7 +122,7 @@ def select_city(cid: int, message: telebot.types.Message, kbrd: Optional[int] = 
 
 @bot.callback_query_handler(
     func=None,
-    state=[UserState.user_lowprice_in_progress],
+    state=[UserState.user_lowprice_in_progress, UserState.user_highprice_in_progress],
     filter_select_city=select_city_buttons_callback_factory.filter(cmd_id='keyboard_next_part')
 )
 def next_part_of_keyboard(call: telebot.types.CallbackQuery) -> None:
@@ -140,7 +151,7 @@ def next_part_of_keyboard(call: telebot.types.CallbackQuery) -> None:
 
 @bot.callback_query_handler(
     func=None,
-    state=[UserState.user_lowprice_in_progress],
+    state=[UserState.user_lowprice_in_progress, UserState.user_highprice_in_progress],
     filter_select_city=select_city_buttons_callback_factory.filter()
 )
 def city_selector_button(call: telebot.types.CallbackQuery) -> None:
@@ -153,6 +164,8 @@ def city_selector_button(call: telebot.types.CallbackQuery) -> None:
     """
     user: int = call.message.chat.id
     chat: int = call.message.chat.id
+
+    user_state: str = bot.get_state(user_id=user, chat_id=chat).split(':')[1]
 
     callback_data: Dict[str, str] = select_city_buttons_callback_factory.parse(callback_data=call.data)
 
@@ -171,7 +184,10 @@ def city_selector_button(call: telebot.types.CallbackQuery) -> None:
 
     # новое состояние
     with bot.retrieve_data(user_id=user, chat_id=chat) as data:
-        data['usd'].substate = LOWPRICE_SUBSTATES.SELECT_HOTELS_AMOUNT.value
+        if user_state == 'user_lowprice_in_progress':
+            data['usd'].substate = LowpriceSubstates.SELECT_HOTELS_AMOUNT.value
+        elif user_state == 'user_highprice_in_progress':
+            data['usd'].substate = HighpriceSubstates.SELECT_HOTELS_AMOUNT.value
 
     select_hotels_amount(message=call.message)
 

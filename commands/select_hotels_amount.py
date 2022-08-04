@@ -1,9 +1,13 @@
+"""
+Реализация шага по выбору количества отелей
+
+"""
 from telebot import telebot
 from typing import *
 
 from classes.user_state_data import UserStateData
 from commands.select_photo_required import select_photo_required
-from config import DELETE_OLD_KEYBOARDS, LOWPRICE_SUBSTATES, MAX_HOTELS_AMOUNT
+from config import DELETE_OLD_KEYBOARDS, HighpriceSubstates, LowpriceSubstates, MAX_HOTELS_AMOUNT
 from functions.send_message_helper import send_message_helper
 from functions.value_valid import value_valid
 from loader import bot, storage
@@ -43,9 +47,20 @@ def filter_func(message: telebot.types.Message) -> bool:
     user: int = message.chat.id
     chat: int = message.chat.id
 
+    check_state: str = bot.get_state(user_id=user, chat_id=chat)
+    if check_state is None:
+        return False
+
+    user_state: str = check_state.split(':')[1]
+
     data: Dict[str, UserStateData]
     with bot.retrieve_data(user_id=user, chat_id=chat) as data:
-        return data['usd'].substate == LOWPRICE_SUBSTATES.SELECT_HOTELS_AMOUNT.value
+        if user_state == 'user_lowprice_in_progress':
+            return data['usd'].substate == LowpriceSubstates.SELECT_HOTELS_AMOUNT.value
+        if user_state == 'user_highprice_in_progress':
+            return data['usd'].substate == HighpriceSubstates.SELECT_HOTELS_AMOUNT.value
+
+    return False
 
 # @bot.message_handler(is_digit=True, content_types=['text'], func=filter_func)
 @bot.message_handler(content_types=['text'], func=filter_func)
@@ -61,6 +76,8 @@ def hotels_amount_text(message: telebot.types.Message) -> None:
 
     user: int = message.chat.id
     chat: int = message.chat.id
+
+    user_state: str = bot.get_state(user_id=user, chat_id=chat).split(':')[1]
 
     # здесь нужно удалить два сообщений
     # if DELETE_OLD_KEYBOARDS:
@@ -104,6 +121,9 @@ def hotels_amount_text(message: telebot.types.Message) -> None:
     # переходим в новое состояние
     data: Dict[str, UserStateData]
     with bot.retrieve_data(user_id=user, chat_id=chat) as data:
-        data['usd'].substate = LOWPRICE_SUBSTATES.SELECT_PHOTO_REQUIRED.value
+        if user_state == 'user_lowprice_in_progress':
+            data['usd'].substate = LowpriceSubstates.SELECT_PHOTO_REQUIRED.value
+        elif user_state == 'user_highprice_in_progress':
+            data['usd'].substate = HighpriceSubstates.SELECT_PHOTO_REQUIRED.value
 
     select_photo_required(message=message)

@@ -1,20 +1,21 @@
+"""
+Загрузка
+
+"""
 import sys
 
-from telebot import telebot, TeleBot
+from telebot import TeleBot
 from telebot.callback_data import CallbackData
 from telebot.custom_filters import StateFilter, IsDigitFilter
 from telebot.storage import StateMemoryStorage
-from typing import *
 
 from classes.countries import Countries
-from classes.is_command_filter import IsCommandFilter
 from config import BOT_TOKEN
 from exceptions.data_unavalible import DataUnavailible
 from exceptions.fatal_error import FatalError
 from functions.console_message import console_message
 from functions.countries_per_world import countries_per_world
 from functions.init_ui import init_ui
-
 
 
 countries: Countries = Countries()
@@ -53,17 +54,4 @@ try:
 except FatalError as e:
     console_message('Завершение работы. Не удалось инициализировать бот. ' + str(e))
     sys.exit(4)
-
-
-
-
-
-
-
-
-
-
-
-
-
 

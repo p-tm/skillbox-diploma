@@ -1,3 +1,7 @@
+"""
+Описание класса
+
+"""
 import pickle
 
 from classes.user_state_data import UserStateData
@@ -8,7 +12,10 @@ from typing import *
 
 @dataclass
 class LogRecord:
+    """
+    Описание сущености - запись в файле истории дейтсвий пользователя
 
+    """
     _dt: Optional[str] = None               # дата и время
     _type: Optional[str] = None             # тип записи
     _content: Optional[str] = None          # содержание

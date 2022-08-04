@@ -1,17 +1,22 @@
+"""
+API-запросы к удалённым среверам
+
+"""
 import time
 
 from json import loads
 from json.decoder import JSONDecodeError
 from requests import request, exceptions
 from requests.models import Response
-from typing import *
+from typing import Any, Callable, Dict, Optional
 
-
-from config import COUNTRIES_API_HEADERS, CITIES_API_HEADERS, HOTELS_API_HEADERS
+from classes.user_state_data import UserStateData
+from config import (
+    COUNTRIES_API_HEADERS, CITIES_API_HEADERS, HOTELS_API_HEADERS, LowpriceSubstates, HighpriceSubstates
+)
 from exceptions.fatal_error import FatalError
 from exceptions.data_unavalible import DataUnavailible
 from functions.console_message import console_message
-
 
 
 class ApiCalls:
@@ -19,9 +24,9 @@ class ApiCalls:
     Инкапсулирует работу с удалёнными серверами через API
 
     """
-    _countries_api_headers = COUNTRIES_API_HEADERS
-    _cities_api_headers = CITIES_API_HEADERS
-    _hotels_api_headers = HOTELS_API_HEADERS
+    _countries_api_headers: Dict[str, str] = COUNTRIES_API_HEADERS
+    _cities_api_headers: Dict[str, str] = CITIES_API_HEADERS
+    _hotels_api_headers: Dict[str, str] = HOTELS_API_HEADERS
 
     def request_helper(self, func: Callable, *, retries: Optional[int] = 1) -> Callable:
         """
@@ -30,8 +35,8 @@ class ApiCalls:
 
         :param func: декорируемая функция
         :param retries: число попыток
-        :return: Callable
-        :raise: DataUnavailible - не удалось получить данные
+        :return: декорированная функция
+        :raise DataUnavailible: - не удалось получить данные
 
         """
         def helper(*args, **kwargs) -> Response:
@@ -59,7 +64,14 @@ class ApiCalls:
 
 
     def json_decode_helper(self, func: Callable) -> Callable:
+        """
+        Декоратор - применяется к функции json.loads
+        Обрабатывает ошибки функции json.loads
 
+        :param func: декорируемая функция
+        :return: декорированная функция
+
+        """
         def helper(*args, **kwargs) -> Any:
             try:
                 ''' тут уже знаем, что код ответа был 200, и данные точно целые и нормально декодируются '''
@@ -71,22 +83,22 @@ class ApiCalls:
 
         return helper
 
-    def get_countries_per_world(self) -> Dict:
+    def get_countries_per_world(self) -> Dict[str, Any]:
         """
         Запрашивает полный список стран в мире
 
-        :return: Dict - полученные данные в виде словаря (в "сыром" виде)
+        :return: полученные данные в виде словаря (в "сыром" виде)
 
         """
         url = "https://country-list5.p.rapidapi.com/countrylist/"
 
         countries_all: Response = self.request_helper(request, retries=3)("GET", url, headers=self._countries_api_headers)
-        countries_dict: Dict = self.json_decode_helper(loads)(countries_all.text)['country']
+        countries_dict: Dict[str, Any] = self.json_decode_helper(loads)(countries_all.text)['country']
 
         return countries_dict
 
 
-    def get_cities_per_country(self, ciso: str) -> Dict:
+    def get_cities_per_country(self, ciso: str) -> Dict[str, Any]:
         """
         Получает список городов в указанной стране
 
@@ -98,11 +110,11 @@ class ApiCalls:
         url = "https://city-list.p.rapidapi.com/api/getCity/" + ciso
 
         cities_all: Response = self.request_helper(request, retries=3)("GET", url, headers=self._cities_api_headers)
-        cities_dict: Dict = self.json_decode_helper(loads)(cities_all.text)['0']
+        cities_dict: Dict[str, Any] = self.json_decode_helper(loads)(cities_all.text)['0']
 
         return cities_dict
 
-    def get_city_destination_id(self, city_name: str) -> Dict:
+    def get_city_destination_id(self, city_name: str) -> Dict[str, Any]:
         """
         Получает 'destination_id' по указанному городу (по строковому имени)
 
@@ -114,11 +126,11 @@ class ApiCalls:
         querystring = {"query": city_name}
 
         location_all: Response = request("GET", url, headers=self._hotels_api_headers, params=querystring)
-        location_dict: Dict = loads(location_all.text)
+        location_dict[str, Any]: Dict = loads(location_all.text)
 
         return location_dict
 
-    def get_hotels_per_city(self, usd: 'UserStateData') -> Dict:
+    def get_hotels_per_city(self, usd: UserStateData) -> Dict[str, Any]:
         """
         Получает перечень отелей в выбранном городе через API-call
         API-call может сам возвращает заданное кол-во отелей
@@ -145,6 +157,12 @@ class ApiCalls:
         # checkout_date = '2022-09-05'
         amount = usd.hotels_amount
 
+        sort_order: str
+        if usd.substate == LowpriceSubstates.REQUEST_HOTELS.value:
+            sort_order = 'PRICE'
+        elif usd.substate == HighpriceSubstates.REQUEST_HOTELS.value:
+            sort_order = 'PRICE_HIGHEST_FIRST'
+
         querystring: Dict = {
             "destinationId": destination_id,
             "pageNumber": "1",
@@ -152,15 +170,15 @@ class ApiCalls:
             "checkIn": checkin_date,
             "checkOut": checkout_date,
             "adults1": "1",
-            "sortOrder": "PRICE"
+            "sortOrder": sort_order
         }
 
         hotels_all: Response = request("GET", url, headers=self._hotels_api_headers, params=querystring)
-        hotels_dict: Dict = loads(hotels_all.text)
+        hotels_dict: Dict[str, Any] = loads(hotels_all.text)
 
         return hotels_dict
 
-    def get_hotel_pictures(self, hotel_id: int) -> Dict:
+    def get_hotel_pictures(self, hotel_id: int) -> Dict[str, Any]:
         """
         Получает фото отеля через API-call
         API-call не может получить указанное кол-во картинок, может только все
@@ -174,12 +192,6 @@ class ApiCalls:
         querystring = {"id": hotel_id}
 
         pictures_all: Response = request("GET", url, headers=self._hotels_api_headers, params=querystring)
-        pictures_dict: Dict = loads(pictures_all.text)
+        pictures_dict: Dict[str, Any] = loads(pictures_all.text)
 
         return pictures_dict
-
-
-
-
-
-

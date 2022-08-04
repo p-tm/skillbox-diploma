@@ -1,3 +1,7 @@
+"""
+Описание класса
+
+"""
 from dataclasses import dataclass, field
 from typing import *
 
@@ -8,7 +12,6 @@ class Hotel:
     Описание сущности "отель"
 
     """
-
     _hotel_id: int                  # индентификатор отеля (возвращается из API-call)
     _country_id: int                # идентификатор страны
     _city_id: int                   # идентификатор города

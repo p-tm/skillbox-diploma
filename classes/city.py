@@ -1,3 +1,7 @@
+"""
+Описание класса
+
+"""
 from dataclasses import dataclass
 from dataclasses import field
 from typing import *

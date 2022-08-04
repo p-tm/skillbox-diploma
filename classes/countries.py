@@ -1,3 +1,7 @@
+"""
+Описание класса
+
+"""
 from classes.dict_wrapper import DictWrapper
 
 

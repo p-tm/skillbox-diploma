@@ -1,9 +1,13 @@
+"""
+Реализация шага по выбору количества фото
+
+"""
 from telebot import telebot
-from typing import *
+from typing import Any
 
 from classes.user_state_data import UserStateData
 from commands.select_checkin_date import select_checkin_date
-from config import DELETE_OLD_KEYBOARDS, LOWPRICE_SUBSTATES, MAX_PHOTOS_AMOUNT
+from config import DELETE_OLD_KEYBOARDS, HighpriceSubstates, LowpriceSubstates, MAX_PHOTOS_AMOUNT
 from functions.send_message_helper import send_message_helper
 from functions.value_valid import value_valid
 from loader import bot
@@ -42,9 +46,20 @@ def filter_func(message: telebot.types.Message) -> bool:
     user: int = message.chat.id
     chat: int = message.chat.id
 
+    check_state: str = bot.get_state(user_id=user, chat_id=chat)
+    if check_state is None:
+        return False
+
+    user_state: str = check_state.split(':')[1]
+
     data: Dict[str, UserStateData]
     with bot.retrieve_data(user_id=user, chat_id=chat) as data:
-        return data['usd'].substate == LOWPRICE_SUBSTATES.SELECT_PHOTOS_AMOUNT.value
+        if user_state == 'user_lowprice_in_progress':
+            return data['usd'].substate == LowpriceSubstates.SELECT_PHOTOS_AMOUNT.value
+        elif user_state == 'user_highprice_in_progress':
+            return data['usd'].substate == HighpriceSubstates.SELECT_PHOTOS_AMOUNT.value
+
+    return False
 
 
 # @bot.message_handler(is_digit=True, content_types=['text'], func=filter_func)
@@ -62,6 +77,8 @@ def photos_amount_text(message: telebot.types.Message) -> None:
     user: int = message.chat.id
     chat: int = message.chat.id
 
+    user_state: str = bot.get_state(user_id=user, chat_id=chat).split(':')[1]
+
     # здесь нужно удалить два сообщений
     # if DELETE_OLD_KEYBOARDS:
     #     with bot.retrieve_data(user, chat) as data:
@@ -77,7 +94,8 @@ def photos_amount_text(message: telebot.types.Message) -> None:
     #     )
 
     # запоминаем требуемое количество картинок
-    with bot.retrieve_data(user, chat) as data:
+    data: Dict[str, Any]
+    with bot.retrieve_data(user_id=user, chat_id=chat) as data:
         try:
             photos_amount = int(message.text)
         except ValueError:
@@ -102,6 +120,9 @@ def photos_amount_text(message: telebot.types.Message) -> None:
 
     # переходим в новое состояние
     with bot.retrieve_data(user, chat) as data:
-        data['usd'].substate = LOWPRICE_SUBSTATES.SELECT_CHECKIN_DATE.value
+        if user_state == 'user_lowprice_in_progress':
+            data['usd'].substate = LowpriceSubstates.SELECT_CHECKIN_DATE.value
+        elif user_state == 'user_highprice_in_progress':
+            data['usd'].substate = HighpriceSubstates.SELECT_CHECKIN_DATE.value
 
     select_checkin_date(message=message)

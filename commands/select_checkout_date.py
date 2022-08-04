@@ -1,10 +1,14 @@
+"""
+Реализация шага по выбору даты выезда
+
+"""
 from datetime import datetime
 
 from telebot import telebot
-from typing import *
+from typing import Dict
 
 from classes.user_state_data import UserStateData
-from config import DELETE_OLD_KEYBOARDS, LOWPRICE_SUBSTATES
+from config import DELETE_OLD_KEYBOARDS, HighpriceSubstates, LowpriceSubstates
 from functions import keyboard_input_date
 from functions.console_message import console_message
 from functions.send_message_helper import send_message_helper
@@ -50,9 +54,20 @@ def filter_func(call: telebot.types.CallbackQuery) -> bool:
     user: int = call.message.chat.id
     chat: int = call.message.chat.id
 
+    check_state: str = bot.get_state(user_id=user, chat_id=chat)
+    if check_state is None:
+        return False
+
+    user_state: str = check_state.split(':')[1]
+
     data: Dict[str, UserStateData]
     with bot.retrieve_data(user_id=user, chat_id=chat) as data:
-        return data['usd'].substate == LOWPRICE_SUBSTATES.SELECT_CHECKOUT_DATE.value
+        if user_state == 'user_lowprice_in_progress':
+            return data['usd'].substate == LowpriceSubstates.SELECT_CHECKOUT_DATE.value
+        elif user_state == 'user_highprice_in_progress':
+            return data['usd'].substate == HighpriceSubstates.SELECT_CHECKOUT_DATE.value
+
+    return False
 
 
 @bot.callback_query_handler(
@@ -63,13 +78,15 @@ def enter_button(call: telebot.types.CallbackQuery) -> None:
     """
     Обработчик события нажатия на кнопку "готово"
 
-    :param call: telebot.types.CallbackQuery
+    :param call:
 
     """
     faulty_input_message: str = 'Некорректное значение даты. Пожалуйста, введите ещё раз'
 
     user: int = call.message.chat.id
     chat: int = call.message.chat.id
+
+    user_state: str = bot.get_state(user_id=user, chat_id=chat).split(':')[1]
 
     #callback_data: Dict[str, str] = input_date_callback_factory.parse(callback_data=call.data)
     try:
@@ -97,9 +114,11 @@ def enter_button(call: telebot.types.CallbackQuery) -> None:
             reenter_date(call.message, str(e))
             return
 
-        more_than_28_message: str = ('Количество ночей не должно превышать 28.'
-                                     'Максимально допустимая дата выезда {}'
-                                     ' Пожалуйста, введите ещё раз').format(usd.max_checkout_date.strftime('%d.%m.%Y'))
+        more_than_28_message: str = (
+            'Количество ночей не должно превышать 28.'
+            'Максимально допустимая дата выезда {}'
+            ' Пожалуйста, введите ещё раз'
+        ).format(usd.max_checkout_date.strftime('%d.%m.%Y'))
 
         # пересчитываем кол-во ночей и проверяем что оно не более 28
         less_than_28: bool = usd.calculate_nights()
@@ -119,6 +138,9 @@ def enter_button(call: telebot.types.CallbackQuery) -> None:
 
     # переходим в новое состояние
     with bot.retrieve_data(user, chat) as data:
-        data['usd'].substate = LOWPRICE_SUBSTATES.SHOW_SUMMARY.value
+        if user_state == 'user_lowprice_in_progress':
+            data['usd'].substate = LowpriceSubstates.SHOW_SUMMARY.value
+        elif user_state == 'user_highprice_in_progress':
+            data['usd'].substate = HighpriceSubstates.SHOW_SUMMARY.value
 
     show_summary(call.message)

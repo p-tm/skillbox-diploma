@@ -1,8 +1,12 @@
+"""
+Вывод резюме по выбранным опциям
+
+"""
 from telebot import telebot
-from typing import *
+from typing import Any, Dict
 
 from classes.user_state_data import UserStateData
-from config import LOWPRICE_SUBSTATES
+from config import HighpriceSubstates, LowpriceSubstates
 from exceptions.data_unavalible import DataUnavailible
 from functions.console_message import console_message
 from functions.hotels_per_city import hotels_per_city
@@ -22,6 +26,9 @@ def show_summary(message: telebot.types.Message) -> None:
     user: int = message.chat.id
     chat: int = message.chat.id
 
+    user_state: str = bot.get_state(user_id=user, chat_id=chat).split(':')[1]
+
+    data: Dict[str, Any]
     with bot.retrieve_data(user_id=user, chat_id=chat) as data:
         summary_message: str = data['usd'].summary()
 
@@ -76,8 +83,13 @@ def show_summary(message: telebot.types.Message) -> None:
     """ переходим к запросу информации об отелях """
 
     # переходим в новое состояние
-    with bot.retrieve_data(user, chat) as data:
-        data['usd'].substate = LOWPRICE_SUBSTATES.REQUEST_HOTELS.value
+    data: Dict[str, Any]
+    with bot.retrieve_data(user_id=user, chat_id=chat) as data:
+        if user_state == 'user_lowprice_in_progress':
+            data['usd'].substate = LowpriceSubstates.REQUEST_HOTELS.value
+        elif user_state == 'user_highprice_in_progress':
+            data['usd'].substate = HighpriceSubstates.REQUEST_HOTELS.value
+
 
     please_wait_message: str = 'Пожалуста подождите. Выполнятеся запрос к удалённому серверу.'
 
@@ -100,7 +112,11 @@ def show_summary(message: telebot.types.Message) -> None:
     """ переходим к отображению информации об отелях """
 
     # переходим в новое состояние
-    with bot.retrieve_data(user, chat) as data:
-        data['usd'].substate = LOWPRICE_SUBSTATES.SHOW_RESULTS.value
+    data: Dict[str, Any]
+    with bot.retrieve_data(user_id=user, chat_id=chat) as data:
+        if user_state == 'user_lowprice_in_progress':
+            data['usd'].substate = LowpriceSubstates.SHOW_RESULTS.value
+        elif user_state == 'user_highprice_in_progress':
+            data['usd'].substate = HighpriceSubstates.SHOW_RESULTS.value
 
     show_results(message)
