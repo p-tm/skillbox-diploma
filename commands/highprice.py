@@ -3,11 +3,12 @@
 
 """
 from telebot import telebot
-from typing import Any, Dict
 
 from classes.user_state import UserState
+from classes.user_state_data import UserStateData
 from commands.select_country import select_country
 from config import HighpriceSubstates, MainMenuCommands
+from functions.get_usd import get_usd
 from functions.send_message_helper import send_message_helper
 from loader import bot, main_menu_buttons_callback_factory
 
@@ -46,21 +47,20 @@ def highprice(message: telebot.types.Message) -> None:
     :param message:
 
     """
-    user: int = message.chat.id
-    chat: int = message.chat.id
-    bot.set_state(user_id=user, chat_id=chat, state=UserState.user_highprice_in_progress)
+    usd: UserStateData = get_usd(message=message)
+    if usd is None:
+        return
+
+    bot.set_state(user_id=usd.user, chat_id=usd.chat, state=UserState.user_highprice_in_progress)
 
     highprice_started_message: str = 'Итак, подибраем самые дорогие отели'
     msg: telebot.types.Message = send_message_helper(bot.send_message, retries=3)(
-        chat_id=chat,
+        chat_id=usd.chat,
         text=highprice_started_message
     )
 
-    data: Dict[str, Any]
-    with bot.retrieve_data(user_id=user, chat_id=chat) as data:
-        data['usd'].header_message = msg
-        data['usd'].substate = HighpriceSubstates.SELECT_COUNTRY.value
-
-    data['usd'].history.add_rec('UCMD', '/highprice')
+    usd.header_message = msg
+    usd.substate = HighpriceSubstates.SELECT_COUNTRY.value
+    usd.history.add_rec('UCMD', '/highprice')
 
     select_country(message=message)

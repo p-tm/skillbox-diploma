@@ -5,9 +5,11 @@
 from telebot import telebot
 from typing import Any
 
+from classes.user_state import UserState
 from classes.user_state_data import UserStateData
 from commands.select_checkin_date import select_checkin_date
-from config import DELETE_OLD_KEYBOARDS, HighpriceSubstates, LowpriceSubstates, MAX_PHOTOS_AMOUNT
+from config import BestdealSubstates, DELETE_OLD_KEYBOARDS, HighpriceSubstates, LowpriceSubstates, MAX_PHOTOS_AMOUNT
+from functions.get_usd import get_usd
 from functions.send_message_helper import send_message_helper
 from functions.value_valid import value_valid
 from loader import bot
@@ -20,19 +22,19 @@ def select_photos_amount(message: telebot.types.Message) -> None:
     :param message: предыдущее сообщение для передачи user и chat
 
     """
-    user: int = message.chat.id
-    chat: int = message.chat.id
+    usd: UserStateData = get_usd(message=message)
+    if usd is None:
+        return
+
+    photos_amount_message: str = 'Введите количество фотографий:'
 
     # приглашение
     msg: telebot.types.Message  = send_message_helper(bot.send_message)(
-        chat_id=chat,
-        text='Введите количество фотографий:'
+        chat_id=usd.chat,
+        text=photos_amount_message
     )
 
-    data: Dict[str, UserStateData]
-    with bot.retrieve_data(user, chat) as data:
-        # data['usd'].message_to_delete = msg
-        data['usd'].last_message = msg
+    usd.last_message = msg
 
 
 def filter_func(message: telebot.types.Message) -> bool:
@@ -43,21 +45,16 @@ def filter_func(message: telebot.types.Message) -> bool:
     :return: True если сообщение прошло через фильтр
 
     """
-    user: int = message.chat.id
-    chat: int = message.chat.id
-
-    check_state: str = bot.get_state(user_id=user, chat_id=chat)
-    if check_state is None:
+    usd: UserStateData = get_usd(message=message)
+    if usd is None:
         return False
 
-    user_state: str = check_state.split(':')[1]
-
-    data: Dict[str, UserStateData]
-    with bot.retrieve_data(user_id=user, chat_id=chat) as data:
-        if user_state == 'user_lowprice_in_progress':
-            return data['usd'].substate == LowpriceSubstates.SELECT_PHOTOS_AMOUNT.value
-        elif user_state == 'user_highprice_in_progress':
-            return data['usd'].substate == HighpriceSubstates.SELECT_PHOTOS_AMOUNT.value
+    if usd.state == UserState.USER_LOWPRICE_IN_PROGRESS:
+        return usd.substate == LowpriceSubstates.SELECT_PHOTOS_AMOUNT.value
+    elif usd.state == UserState.USER_HIGHPRICE_IN_PROGRESS:
+        return usd.substate == HighpriceSubstates.SELECT_PHOTOS_AMOUNT.value
+    elif usd.state == UserState.USER_BESTDEAL_IN_PROGRESS:
+        return usd.substate == BestdealSubstates.SELECT_PHOTOS_AMOUNT.value
 
     return False
 
@@ -74,10 +71,9 @@ def photos_amount_text(message: telebot.types.Message) -> None:
     nan_message: str = 'Необходимо ввести целое число от 1 до {}. Введите ещё раз'.format(MAX_PHOTOS_AMOUNT)
     not_in_range_message: str = nan_message
 
-    user: int = message.chat.id
-    chat: int = message.chat.id
-
-    user_state: str = bot.get_state(user_id=user, chat_id=chat).split(':')[1]
+    usd: UserStateData = get_usd(message=message)
+    if usd is None:
+        return
 
     # здесь нужно удалить два сообщений
     # if DELETE_OLD_KEYBOARDS:
@@ -94,35 +90,34 @@ def photos_amount_text(message: telebot.types.Message) -> None:
     #     )
 
     # запоминаем требуемое количество картинок
-    data: Dict[str, Any]
-    with bot.retrieve_data(user_id=user, chat_id=chat) as data:
-        try:
-            photos_amount = int(message.text)
-        except ValueError:
-            send_message_helper(bot.send_message, retries=3)(
-                chat_id=chat,
-                text=nan_message
-            )
-            select_photos_amount(message)
-            return
+    try:
+        photos_amount = int(message.text)
+    except ValueError:
+        send_message_helper(bot.send_message, retries=3)(
+            chat_id=usd.chat,
+            text=nan_message
+        )
+        select_photos_amount(message)
+        return
 
-        if not value_valid(photos_amount, 1, MAX_PHOTOS_AMOUNT):
-            send_message_helper(bot.send_message, retries=3)(
-                chat_id=chat,
-                text=not_in_range_message
-            )
-            select_photos_amount(message)
-            return
+    if not value_valid(photos_amount, 1, MAX_PHOTOS_AMOUNT):
+        send_message_helper(bot.send_message, retries=3)(
+            chat_id=usd.chat,
+            text=not_in_range_message
+        )
+        select_photos_amount(message)
+        return
 
-        data['usd'].photos_amount = photos_amount
+    usd.photos_amount = photos_amount
 
     """ переходим к выбору даты заезда """
 
     # переходим в новое состояние
-    with bot.retrieve_data(user, chat) as data:
-        if user_state == 'user_lowprice_in_progress':
-            data['usd'].substate = LowpriceSubstates.SELECT_CHECKIN_DATE.value
-        elif user_state == 'user_highprice_in_progress':
-            data['usd'].substate = HighpriceSubstates.SELECT_CHECKIN_DATE.value
+    if usd.state == UserState.USER_LOWPRICE_IN_PROGRESS:
+        usd.substate = LowpriceSubstates.SELECT_CHECKIN_DATE.value
+    elif usd.state == UserState.USER_HIGHPRICE_IN_PROGRESS:
+        usd.substate = HighpriceSubstates.SELECT_CHECKIN_DATE.value
+    elif usd.state == UserState.USER_BESTDEAL_IN_PROGRESS:
+        usd.substate = BestdealSubstates.SELECT_CHECKIN_DATE.value
 
     select_checkin_date(message=message)

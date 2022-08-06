@@ -1,6 +1,10 @@
+"""
+Описание функции
+
+"""
 import os
 
-from typing import *
+from typing import Any, Dict
 
 from api.api_calls import ApiCalls
 from classes.countries import Countries

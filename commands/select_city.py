@@ -13,8 +13,8 @@ from typing import Dict, Optional, Tuple
 from classes.user_state import UserState
 from classes.user_state_data import UserStateData
 from commands.select_hotels_amount import select_hotels_amount
-from config import DELETE_OLD_KEYBOARDS, HighpriceSubstates, LowpriceSubstates, MAX_KEYS_PER_KEYBOARD
-
+from config import BestdealSubstates, DELETE_OLD_KEYBOARDS, HighpriceSubstates, LowpriceSubstates, MAX_KEYS_PER_KEYBOARD
+from functions.get_usd import get_usd
 from functions.send_message_helper import send_message_helper
 
 from loader import bot, countries, select_city_buttons_callback_factory
@@ -35,18 +35,17 @@ class SelectCityCallbackFilter(AdvancedCustomFilter):
         Функция фильтрации
 
         """
-        user: int = call.message.chat.id
-        chat: int = call.message.chat.id
-        user_state: str = bot.get_state(user_id=user, chat_id=chat).split(':')[1]
-        data: Dict[str, Any]
-        is_select_city: bool
-        with bot.retrieve_data(user_id=user, chat_id=chat) as data:
-            if user_state == 'user_lowprice_in_progress':
-                is_select_city = data['usd'].substate == LowpriceSubstates.SELECT_CITY.value
-            elif user_state == 'user_highprice_in_progress':
-                is_select_city = data['usd'].substate == HighpriceSubstates.SELECT_CITY.value
-            else:
-                is_select_city = False
+        usd: UserStateData = get_usd(message=call.message)
+        if usd is None:
+            return False
+
+        is_select_city: bool = False
+        if usd.state == UserState.USER_LOWPRICE_IN_PROGRESS:
+            is_select_city = usd.substate == LowpriceSubstates.SELECT_CITY.value
+        elif usd.state == UserState.USER_HIGHPRICE_IN_PROGRESS:
+            is_select_city = usd.substate == HighpriceSubstates.SELECT_CITY.value
+        elif usd.state == UserState.USER_BESTDEAL_IN_PROGRESS:
+            is_select_city = usd.substate == BestdealSubstates.SELECT_CITY.value
 
         return is_select_city and config.check(query=call)
 
@@ -101,28 +100,32 @@ def select_city(cid: int, message: telebot.types.Message, kbrd: Optional[int] = 
     :param kbrd: порядковый номер частичной клавиатуры
 
     """
-    user: int = message.chat.id
-    chat: int = message.chat.id
+    usd: UserStateData = get_usd(message=message)
+    if usd is None:
+        return
+
     keyboard, current, last = keyboard_select_city(cid, kbrd)
 
-    with bot.retrieve_data(user_id=user, chat_id=chat) as data:
-        data['usd'].set_keyboard_data(case='cities', current=current, last=last)
+    usd.set_keyboard_data(case='cities', current=current, last=last)
 
     # рисуем первые 30 кнопок
     msg: telebot.types.Message = send_message_helper(bot.send_message, retries=3)(
-        chat_id=chat,
+        chat_id=usd.chat,
         text='Выберите город:',
         reply_markup=keyboard
     )
 
-    with bot.retrieve_data(user, chat) as data:
-        data['usd'].message_to_delete = msg
-        data['usd'].last_message = msg
+    usd.message_to_delete = msg
+    usd.last_message = msg
 
 
 @bot.callback_query_handler(
     func=None,
-    state=[UserState.user_lowprice_in_progress, UserState.user_highprice_in_progress],
+    state=[
+        UserState.user_lowprice_in_progress,
+        UserState.user_highprice_in_progress,
+        UserState.user_bestdeal_in_progress
+    ],
     filter_select_city=select_city_buttons_callback_factory.filter(cmd_id='keyboard_next_part')
 )
 def next_part_of_keyboard(call: telebot.types.CallbackQuery) -> None:
@@ -132,26 +135,29 @@ def next_part_of_keyboard(call: telebot.types.CallbackQuery) -> None:
     :param call: telebot.types.CallbackQuery
 
     """
-    user: int = call.message.chat.id
-    chat: int = call.message.chat.id
+    usd: UserStateData = get_usd(message=call.message)
+    if usd is None:
+        return
 
     if DELETE_OLD_KEYBOARDS:
         send_message_helper(bot.delete_message, retries=3)(
-            chat_id=chat,
+            chat_id=usd.chat,
             message_id=call.message.id
         )
 
-    data: Dict[str, UserStateData]
-    with bot.retrieve_data(user_id=user, chat_id=chat) as data:
-        cid: int = data['usd'].selected_country_id
-        kbrd: int = data['usd'].next_keyboard()
+    cid: int = usd.selected_country_id
+    kbrd: int = usd.next_keyboard()
 
     select_city(cid=cid, message=call.message, kbrd=kbrd)
 
 
 @bot.callback_query_handler(
     func=None,
-    state=[UserState.user_lowprice_in_progress, UserState.user_highprice_in_progress],
+    state=[
+        UserState.user_lowprice_in_progress,
+        UserState.user_highprice_in_progress,
+        UserState.user_bestdeal_in_progress
+    ],
     filter_select_city=select_city_buttons_callback_factory.filter()
 )
 def city_selector_button(call: telebot.types.CallbackQuery) -> None:
@@ -162,10 +168,9 @@ def city_selector_button(call: telebot.types.CallbackQuery) -> None:
     :return: None
 
     """
-    user: int = call.message.chat.id
-    chat: int = call.message.chat.id
-
-    user_state: str = bot.get_state(user_id=user, chat_id=chat).split(':')[1]
+    usd: UserStateData = get_usd(message=call.message)
+    if usd is None:
+        return
 
     callback_data: Dict[str, str] = select_city_buttons_callback_factory.parse(callback_data=call.data)
 
@@ -177,20 +182,17 @@ def city_selector_button(call: telebot.types.CallbackQuery) -> None:
     #         message_id=call.message.id
     #     )
 
-    data: Dict[str, UserStateData]
-    with bot.retrieve_data(user_id=user, chat_id=chat) as data:
-        data['usd'].selected_city_id = selected_city_id
-        data['usd'].reinit_keyboard()
+    usd.selected_city_id = selected_city_id
+    usd.reinit_keyboard()
 
     # новое состояние
-    with bot.retrieve_data(user_id=user, chat_id=chat) as data:
-        if user_state == 'user_lowprice_in_progress':
-            data['usd'].substate = LowpriceSubstates.SELECT_HOTELS_AMOUNT.value
-        elif user_state == 'user_highprice_in_progress':
-            data['usd'].substate = HighpriceSubstates.SELECT_HOTELS_AMOUNT.value
+    if usd.state == UserState.USER_LOWPRICE_IN_PROGRESS:
+        usd.substate = LowpriceSubstates.SELECT_HOTELS_AMOUNT.value
+    elif usd.state == UserState.USER_HIGHPRICE_IN_PROGRESS:
+        usd.substate = HighpriceSubstates.SELECT_HOTELS_AMOUNT.value
+    elif usd.state == UserState.USER_BESTDEAL_IN_PROGRESS:
+        usd.substate = BestdealSubstates.SELECT_HOTELS_AMOUNT.value
 
     select_hotels_amount(message=call.message)
-
-
 
 

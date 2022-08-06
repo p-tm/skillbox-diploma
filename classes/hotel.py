@@ -3,7 +3,7 @@
 
 """
 from dataclasses import dataclass, field
-from typing import *
+from typing import List, Optional
 
 
 @dataclass
@@ -79,11 +79,15 @@ class Hotel:
         )
 
         # парсим расстояние до центра
-        miles = dtcc.split()[0]
-        try:
-            self.km_to_city_center = float(miles) * 1.61
-        except ValueError:
-            raise
+        if dtcc is None:
+            self._distance_to_city_center = 'не указано'
+        else:
+            self._distance_to_city_center = dtcc
+            miles = dtcc.split()[0]
+            try:
+                self.km_to_city_center = float(miles) * 1.61
+            except ValueError:
+                raise
 
         # считаем полную стоимость
         self._cost = self._nights * self._price_per_night
@@ -114,22 +118,43 @@ class Hotel:
         :return: res: текст сообщения
 
         """
+        dtcc: str = ''
+        if self._distance_to_city_center == 'не указано':
+            dtcc = 'не указано'
+        else:
+            dtcc = '{:.1f} км'.format(self._km_to_city_center)
+
         res: str = (
                 '<i>Наименование:</i> <b>{}</b>\n'
                 '<i>Адрес:</i> {}\n'
-                '<i>Расстояние до центра города: {:.1f} км</i>\n'
+                '<i>Расстояние до центра города: {}</i>\n'
                 '<i>Цена за ночь:</i> {}\n'
                 '<i>Полная стоимость:</i> {}{}\n'
                 '{}').format(
             self._name,
             self._full_address,
-            self._km_to_city_center,
+            dtcc,
             self._price_per_night_str,
             self._currency, self._cost,
             self._url
         )
 
         return res
+
+    @staticmethod
+    def str_to_km(miles: str) -> float:
+        """
+
+        :param miles:
+        :return:
+        """
+        miles = miles.split()[0]
+        try:
+            km_to_city_center = float(miles) * 1.61
+        except ValueError:
+            raise
+
+        return km_to_city_center
 
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
     геттеры и сеттеры

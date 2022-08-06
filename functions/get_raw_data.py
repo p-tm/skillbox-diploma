@@ -1,7 +1,10 @@
-import os
-from typing import *
+"""
+Описание функции
 
-from api.api_calls import ApiCalls
+"""
+import os
+from typing import Any, Callable, Dict, Iterable, TextIO
+
 from exceptions.data_unavalible import DataUnavailible
 from functions.cashfile import cashfile
 
@@ -21,19 +24,18 @@ def get_raw_data(*, force: bool, fname: str, func: Callable, **func_kwa) -> Dict
     """
     f_name = cashfile(fname)    # добавляем относительный путь
 
-    if not os.path.exists(f_name) or force:
+    if (not os.path.exists(f_name)) or force:
 
         try:
-            #countries_raw: Dict = ApiCalls().get_countries_per_world()
             raw_data: Dict[str, Any] = func(**func_kwa)
         except DataUnavailible:
             raise
 
-        f: Iterable[str]
+        f: TextIO
         with open(f_name, 'w', errors='replace') as f:
             f.write(str(raw_data))
     else:
-        f: Iterable[str]
+        f: TextIO
         with open(f_name, 'r', errors='replace') as f:
             raw_data: Dict[str, Any] = eval(f.read())
 

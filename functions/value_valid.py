@@ -1,4 +1,8 @@
-from typing import *
+"""
+Описание функции
+
+"""
+from typing import Union
 
 
 def value_valid(

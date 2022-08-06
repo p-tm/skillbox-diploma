@@ -6,9 +6,11 @@ from telebot import telebot
 from typing import Any, Dict
 
 from classes.user_state import UserState
+from classes.user_state_data import UserStateData
 from commands.menu import main_menu_buttons_callback_factory
 from commands.select_country import select_country
 from config import DELETE_OLD_KEYBOARDS, MainMenuCommands, LowpriceSubstates
+from functions.get_usd import get_usd
 from functions.send_message_helper import send_message_helper
 from loader import bot
 
@@ -49,21 +51,20 @@ def lowprice(message: telebot.types.Message) -> None:
     :param message:
 
     """
-    user: int = message.chat.id
-    chat: int = message.chat.id
-    bot.set_state(user_id=user, chat_id=chat, state=UserState.user_lowprice_in_progress)
+    usd: UserStateData = get_usd(message=message)
+    if usd is None:
+        return
+
+    bot.set_state(user_id=usd.user, chat_id=usd.chat, state=UserState.user_lowprice_in_progress)
 
     lowprice_started_message: str = 'Итак, подибраем самые дешёвые отели'
     msg: telebot.types.Message = send_message_helper(bot.send_message, retries=3)(
-        chat_id=chat,
+        chat_id=usd.chat,
         text=lowprice_started_message
     )
 
-    data: Dict[str, Any]
-    with bot.retrieve_data(user, chat) as data:
-        data['usd'].header_message = msg
-        data['usd'].substate = LowpriceSubstates.SELECT_COUNTRY.value
-
-    data['usd'].history.add_rec('UCMD', '/lowprice')
+    usd.header_message = msg
+    usd.substate = LowpriceSubstates.SELECT_COUNTRY.value
+    usd.history.add_rec('UCMD', '/lowprice')
 
     select_country(message=message)

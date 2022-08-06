@@ -1,8 +1,12 @@
+"""
+Описание функции
+
+"""
 import sys
 import time
 import datetime
 
-from typing import  *
+from typing import Optional
 from requests import exceptions
 
 from telebot import telebot
@@ -13,14 +17,15 @@ from functions.console_message import console_message
 from exceptions.fatal_error import FatalError
 
 
-def init_ui(bot: telebot.TeleBot, *, retries: Optional[int] = 1) -> None:
+def init_ui(*, retries: Optional[int] = 1) -> None:
     """
     Инициализация элементов интерфейса пользователя
 
-    :param bot - инстанс бота
-    :param retries: Optional[int] - число попыток
+    :param retries: число попыток
 
     """
+    from loader import bot
+
     _tries_counter = 1
     while True:
         try:
@@ -31,6 +36,7 @@ def init_ui(bot: telebot.TeleBot, *, retries: Optional[int] = 1) -> None:
                 BotCommand('/stop', 'Прервать текущий запрос'),
                 BotCommand('/lowprice', 'Подобрать самые дешёвые отели'),
                 BotCommand('/highprice', 'Подобрать самые дорогие отели'),
+                BotCommand('/bestdeal', 'Подобрать по цене и расстоянию от центра'),
                 BotCommand('/history', 'Посмотреть историю поиска')
             ])
             return
@@ -43,7 +49,3 @@ def init_ui(bot: telebot.TeleBot, *, retries: Optional[int] = 1) -> None:
         except Exception as e:
             console_message(str(e))
             break
-
-
-
-

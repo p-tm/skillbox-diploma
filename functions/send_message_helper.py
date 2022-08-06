@@ -1,3 +1,7 @@
+"""
+Описание функции
+
+"""
 import sys
 import time
 from requests import exceptions

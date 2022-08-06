@@ -1,3 +1,7 @@
+"""
+Описание функции
+
+"""
 from datetime import datetime
 
 
@@ -5,8 +9,7 @@ def console_message(msg: str) -> None:
     """
     Выводит сообщение в консоль с указанием времени
 
-    :param msg: str - текст сообщения
-    :return: None
+    :param msg: текст сообщения
 
     """
     print(

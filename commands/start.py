@@ -24,9 +24,7 @@ def start(message: telebot.types.Message) -> None:
     user: int = message.chat.id
     chat: int = message.chat.id
 
-    # with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
-
-    if bot.get_state(user, chat) is None:
+    if bot.get_state(user_id=user, chat_id=chat) is None:
 
         hello_message: str = (
             'Здравствуйте!\n\n'
@@ -50,7 +48,7 @@ def start(message: telebot.types.Message) -> None:
         usd.history.add_rec('UCMD', '/start')
 
         # вызов главного меню (в виде inline кнопок)
-        menu(message)
+        menu(message=message)
 
     else:
         already_started_message: str = (
@@ -58,10 +56,3 @@ def start(message: telebot.types.Message) -> None:
             'команду "/stop" '
         )
         send_message_helper(bot.send_message, retries=3)(chat_id=chat, text=already_started_message)
-        # try:
-        #     bot.send_message(
-        #         chat,
-        #         'Вы уже стартовали. Для прерывания выполнения текущего запроса используйте команду "/stop"'
-        #     )
-        # except exceptions.ReadTimeout:
-        #     raise

@@ -1,8 +1,12 @@
+"""
+Описание функции
+
+"""
 from telebot import telebot
 from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
 from telebot.callback_data import CallbackData, CallbackDataFilter
 from telebot.custom_filters import AdvancedCustomFilter
-from typing import *
+from typing import List, Tuple
 
 from functions.send_message_helper import send_message_helper
 from loader import bot, input_date_callback_factory

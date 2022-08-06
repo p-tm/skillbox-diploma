@@ -9,17 +9,20 @@ from telebot.handler_backends import State, StatesGroup
 from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
 from telebot.callback_data import CallbackData, CallbackDataFilter
 from telebot.custom_filters import AdvancedCustomFilter, SimpleCustomFilter
-from typing import *
+from typing import Dict, Optional, Tuple
 
 from classes.user_state import UserState
 from classes.user_state_data import UserStateData
 from classes.countries import Countries
 from commands.select_city import select_city
-from config import DELETE_OLD_KEYBOARDS, HighpriceSubstates, LowpriceSubstates, MAX_KEYS_PER_KEYBOARD
+from config import (
+    BestdealSubstates, DELETE_OLD_KEYBOARDS, HighpriceSubstates, LowpriceSubstates, MAX_KEYS_PER_KEYBOARD
+)
 from exceptions.data_unavalible import DataUnavailible
 from functions.cities_per_country import cities_per_country
 from functions.console_message import console_message
 from functions.send_message_helper import send_message_helper
+from functions.get_usd import get_usd
 from loader import bot, storage, countries, select_country_buttons_callback_factory
 
 
@@ -34,24 +37,34 @@ class SelectCountryCallbackFilter(AdvancedCustomFilter):
 
     def check(self, call: telebot.types.CallbackQuery, config: CallbackDataFilter) -> bool:
         """
-        Функция фильтрации -
+        Функция фильтрации - пропускает сообщения от кнопок выбора страны
+
+        :return: True = пропустить сообщение
 
         """
-        user = call.message.chat.id
-        chat = call.message.chat.id
-        user_state: str = bot.get_state(user_id=user, chat_id=chat).split(':')[1]
-        with bot.retrieve_data(user, chat) as data:
-            if user_state == 'user_lowprice_in_progress':
-                is_select_country = data['usd'].substate == LowpriceSubstates.SELECT_COUNTRY.value
-            elif user_state == 'user_highprice_in_progress':
-                is_select_country = data['usd'].substate == HighpriceSubstates.SELECT_COUNTRY.value
+
+        usd: UserStateData = get_usd(message=call.message)
+        if usd is None:
+            return False
+
+        is_select_country: bool = False
+        if usd.state == UserState.USER_LOWPRICE_IN_PROGRESS:
+            is_select_country = usd.substate == LowpriceSubstates.SELECT_COUNTRY.value
+        elif usd.state == UserState.USER_HIGHPRICE_IN_PROGRESS:
+            is_select_country = usd.substate == HighpriceSubstates.SELECT_COUNTRY.value
+        elif usd.state == UserState.USER_BESTDEAL_IN_PROGRESS:
+            is_select_country = usd.substate == BestdealSubstates.SELECT_COUNTRY.value
+
         return is_select_country and config.check(query=call)
 
 
 bot.add_custom_filter(SelectCountryCallbackFilter())
 
 
-def keyboard_select_country(countries: Countries, current: Optional[int] = 1) -> Tuple[telebot.types.InlineKeyboardMarkup, int, int]:
+def keyboard_select_country(
+        countries: Countries,
+        current: Optional[int] = 1
+) -> Tuple[telebot.types.InlineKeyboardMarkup, int, int]:
     """
     Создаёт виртуальную клавиатуру с кнопками для выбора страны
 
@@ -100,30 +113,32 @@ def select_country(message: telebot.types.Message, kbrd: Optional[int] = 1) -> N
     :param kbrd: порядковый номер частичной клавиатуры
 
     """
-    user: int = message.chat.id
-    chat: int = message.chat.id
+    usd: UserStateData = get_usd(message=message)
+    if usd is None:
+        return
+
     keyboard, current, last = keyboard_select_country(countries, kbrd)
 
-    data: Dict
-    with bot.retrieve_data(user_id=user, chat_id=chat) as data:
-        data['usd'].set_keyboard_data(case='countries', current=current, last=last)
+    usd.set_keyboard_data(case='countries', current=current, last=last)
 
     # рисуем первые 30 кнопок
     msg: telebot.types.Message = send_message_helper(bot.send_message, retries=3)(
-        chat_id=chat,
+        chat_id=usd.chat,
         text='Выберите страну:',
         reply_markup=keyboard
     )
 
-    data: Dict
-    with bot.retrieve_data(user_id=user, chat_id=chat) as data:
-        data['usd'].message_to_delete = msg
-        data['usd'].last_message = msg
+    usd.message_to_delete = msg
+    usd.last_message = msg
 
 
 @bot.callback_query_handler(
     func=None,
-    state=[UserState.user_lowprice_in_progress, UserState.user_highprice_in_progress],
+    state=[
+        UserState.user_lowprice_in_progress,
+        UserState.user_highprice_in_progress,
+        UserState.user_bestdeal_in_progress
+    ],
     filter_select_country=select_country_buttons_callback_factory.filter(cmd_id=['keyboard_next_part'])
 )
 def next_part_of_keyboard(call: telebot.types.CallbackQuery) -> None:
@@ -133,24 +148,28 @@ def next_part_of_keyboard(call: telebot.types.CallbackQuery) -> None:
     :param call:
 
     """
-    user: int = call.message.chat.id
-    chat: int = call.message.chat.id
+    usd: UserStateData = get_usd(message=call.message)
+    if usd is None:
+        return
 
     if DELETE_OLD_KEYBOARDS:
         send_message_helper(bot.delete_message, retries=3)(
-            chat_id=chat,
+            chat_id=usd.chat,
             message_id=call.message.id
         )
 
-    with bot.retrieve_data(user, chat) as data:
-        kbrd: int = data['usd'].next_keyboard()
+    kbrd: int = usd.next_keyboard()
 
     select_country(call.message, kbrd)
 
 
 @bot.callback_query_handler(
     func=None,
-    state=[UserState.user_lowprice_in_progress, UserState.user_highprice_in_progress],
+    state=[
+        UserState.user_lowprice_in_progress,
+        UserState.user_highprice_in_progress,
+        UserState.user_bestdeal_in_progress
+    ],
     filter_select_country=select_country_buttons_callback_factory.filter()
 )
 def country_selector_button(call: telebot.types.CallbackQuery) -> None:
@@ -160,10 +179,9 @@ def country_selector_button(call: telebot.types.CallbackQuery) -> None:
     :param call: telebot.types.CallbackQuery
 
     """
-    user: int = call.message.chat.id
-    chat: int = call.message.chat.id
-
-    user_state: str = bot.get_state(user_id=user, chat_id=chat).split(':')[1]
+    usd: UserStateData = get_usd(message=call.message)
+    if usd is None:
+        return
 
     callback_data: Dict[str, str] = select_country_buttons_callback_factory.parse(callback_data=call.data)
 
@@ -175,18 +193,18 @@ def country_selector_button(call: telebot.types.CallbackQuery) -> None:
     #         message_id=call.message.id
     #     )
 
-    with bot.retrieve_data(user, chat) as data:
-        data['usd'].selected_country_id = selected_country_id
-        data['usd'].reinit_keyboard()
+    usd.selected_country_id = selected_country_id
+    usd.reinit_keyboard()
 
     """ переходим к выбору города """
 
     # новое состояние
-    with bot.retrieve_data(user, chat) as data:
-        if user_state == 'user_lowprice_in_progress':
-            data['usd'].substate = LowpriceSubstates.SELECT_CITY.value
-        elif user_state == 'user_highprice_in_progress':
-            data['usd'].substate = HighpriceSubstates.SELECT_CITY.value
+    if usd.state == UserState.USER_LOWPRICE_IN_PROGRESS:
+        usd.substate = LowpriceSubstates.SELECT_CITY.value
+    elif usd.state == UserState.USER_HIGHPRICE_IN_PROGRESS:
+        usd.substate = HighpriceSubstates.SELECT_CITY.value
+    elif usd.state == UserState.USER_BESTDEAL_IN_PROGRESS:
+        usd.substate = BestdealSubstates.SELECT_CITY.value
 
     # запрашиваем список городов в стране (удалённый запрос)
     try:
@@ -194,13 +212,12 @@ def country_selector_button(call: telebot.types.CallbackQuery) -> None:
     except DataUnavailible as e:
         console_message('Не могу получить список городов.' + str(e))
         send_message_helper(bot.send_message, retries=3)(
-            user_id=user,
-            chat_id=chat,
+            user_id=usd.user,
+            chat_id=usd.chat,
             text="🚫 Не могу получить список городов."
          )
 
     select_city(cid=selected_country_id, message=call.message)
-
 
 
 

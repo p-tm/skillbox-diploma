@@ -3,7 +3,7 @@
 
 """
 from dataclasses import dataclass
-from typing import *
+from typing import Iterable, Optional, TextIO
 from classes.log_record import LogRecord
 
 @dataclass
@@ -30,10 +30,10 @@ class HistoryLog:
 
         :param rtype:
         :param text:
-        :return:
 
         """
         # logging.info(LogRecord().create(rtype, text))
+        f: TextIO
         with open(self._filename, mode='a', encoding='utf-8', errors='replace') as f:
             f.write(LogRecord().create(rtype, text))
 
@@ -44,7 +44,7 @@ class HistoryLog:
         :yield: запись из файла, преобразованная в тип LogRecord
 
         """
-        f: Iterable[str]
+        f: TextIO
         with open(self._filename, mode='r', encoding='utf-8', errors='replace') as f:
             line: str
             for line in f:

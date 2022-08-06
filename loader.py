@@ -2,29 +2,46 @@
 Загрузка
 
 """
+import os
+import pickle
 import sys
 
 from telebot import TeleBot
 from telebot.callback_data import CallbackData
 from telebot.custom_filters import StateFilter, IsDigitFilter
 from telebot.storage import StateMemoryStorage
+from typing import TextIO
 
 from classes.countries import Countries
-from config import BOT_TOKEN
+from config import BOT_TOKEN, STORE_DATA_LOCALLY, LOCAL_STORAGE
 from exceptions.data_unavalible import DataUnavailible
 from exceptions.fatal_error import FatalError
+from functions.cashfile import cashfile
 from functions.console_message import console_message
 from functions.countries_per_world import countries_per_world
 from functions.init_ui import init_ui
 
 
 countries: Countries = Countries()
+read_from_server: bool = True
 
-try:
-    countries_per_world(countries)
-except DataUnavailible as e:
-    console_message('Завершение работы. Не удалось получить перечень стран. ' + str(e))
-    sys.exit(4)
+if STORE_DATA_LOCALLY:
+
+    f_name: str = cashfile(LOCAL_STORAGE)
+    if os.path.exists(f_name):
+        f: TextIO
+        with open(f_name, mode='r', encoding='utf-8', errors='replace') as f:
+            content: str = f.read()
+        countries = pickle.loads(eval(content))
+        read_from_server = False
+
+if read_from_server:
+
+    try:
+        countries_per_world(countries)
+    except DataUnavailible as e:
+        console_message('Завершение работы. Не удалось получить перечень стран. ' + str(e))
+        sys.exit(4)
 
 # doesn't throw exceptions
 storage: StateMemoryStorage = StateMemoryStorage()
@@ -50,7 +67,7 @@ bot.add_custom_filter(IsDigitFilter())
 # bot.add_custom_filter(InputDateCallbackFilter())
 
 try:
-    init_ui(bot, retries=3)
+    init_ui(retries=3)
 except FatalError as e:
     console_message('Завершение работы. Не удалось инициализировать бот. ' + str(e))
     sys.exit(4)

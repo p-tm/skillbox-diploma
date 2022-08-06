@@ -10,6 +10,7 @@ from requests import request, exceptions
 from requests.models import Response
 from typing import Any, Callable, Dict, Optional
 
+from classes.user_state import UserState
 from classes.user_state_data import UserStateData
 from config import (
     COUNTRIES_API_HEADERS, CITIES_API_HEADERS, HOTELS_API_HEADERS, LowpriceSubstates, HighpriceSubstates
@@ -62,7 +63,6 @@ class ApiCalls:
 
         return helper
 
-
     def json_decode_helper(self, func: Callable) -> Callable:
         """
         Декоратор - применяется к функции json.loads
@@ -92,7 +92,11 @@ class ApiCalls:
         """
         url = "https://country-list5.p.rapidapi.com/countrylist/"
 
-        countries_all: Response = self.request_helper(request, retries=3)("GET", url, headers=self._countries_api_headers)
+        countries_all: Response = self.request_helper(request, retries=3)(
+            "GET",
+            url,
+            headers=self._countries_api_headers
+        )
         countries_dict: Dict[str, Any] = self.json_decode_helper(loads)(countries_all.text)['country']
 
         return countries_dict
@@ -116,31 +120,33 @@ class ApiCalls:
 
     def get_city_destination_id(self, city_name: str) -> Dict[str, Any]:
         """
-        Получает 'destination_id' по указанному городу (по строковому имени)
+        Возвращает 'destination_id' по указанному городу (по строковому имени)
 
-        :return:
+        :return: словарь, содержание определяется ответом API-call
 
         """
         url = "https://hotels4.p.rapidapi.com/locations/v2/search"
 
         querystring = {"query": city_name}
 
-        location_all: Response = request("GET", url, headers=self._hotels_api_headers, params=querystring)
-        location_dict[str, Any]: Dict = loads(location_all.text)
+        location_all: Response = self.request_helper(request, retries=3)(
+            "GET",
+            url,
+            headers=self._hotels_api_headers,
+            params=querystring
+        )
+        location_dict: Dict[str, Any] = self.json_decode_helper(loads)(location_all.text)
 
         return location_dict
 
-    def get_hotels_per_city(self, usd: UserStateData) -> Dict[str, Any]:
+    def get_hotels_per_city(self, usd: UserStateData, page: int = 1) -> Dict[str, Any]:
         """
         Получает перечень отелей в выбранном городе через API-call
         API-call может сам возвращает заданное кол-во отелей
 
-        :param bot: PcTelBot
-            -
-        :param user: User
-            -
-        :return: Dict
-            - словарь, содержание определяется ответом API-call
+        :param usd:
+        :param page:
+        :return: словарь, содержание определяется ответом API-call
 
         """
 
@@ -153,28 +159,49 @@ class ApiCalls:
         destination_id: int = countries[usd.selected_country_id].cities[usd.selected_city_id].dids[0]
         checkin_date = usd.checkin_date.strftime('%Y-%m-%d')
         checkout_date = usd.checkout_date.strftime('%Y-%m-%d')
-        # checkin_date = '2022-09-01'
-        # checkout_date = '2022-09-05'
         amount = usd.hotels_amount
 
-        sort_order: str
-        if usd.substate == LowpriceSubstates.REQUEST_HOTELS.value:
-            sort_order = 'PRICE'
-        elif usd.substate == HighpriceSubstates.REQUEST_HOTELS.value:
-            sort_order = 'PRICE_HIGHEST_FIRST'
+        if usd.state == UserState.USER_LOWPRICE_IN_PROGRESS:
+            querystring: Dict = {
+                "destinationId": destination_id,
+                "pageNumber": "1",
+                "pageSize": amount,
+                "checkIn": checkin_date,
+                "checkOut": checkout_date,
+                "adults1": "1",
+                "sortOrder": 'PRICE'
+            }
+        elif usd.state == UserState.USER_HIGHPRICE_IN_PROGRESS:
+            querystring: Dict = {
+                "destinationId": destination_id,
+                "pageNumber": "1",
+                "pageSize": amount,
+                "checkIn": checkin_date,
+                "checkOut": checkout_date,
+                "adults1": "1",
+                "sortOrder": 'PRICE_HIGHEST_FIRST'
+            }
+        elif usd.state == UserState.USER_BESTDEAL_IN_PROGRESS:
+            querystring: Dict = {
+                "destinationId": destination_id,
+                "pageNumber": page,
+                "pageSize": "25",
+                "checkIn": checkin_date,
+                "checkOut": checkout_date,
+                "adults1": "1",
+                "sortOrder": 'DISTANCE_FROM_LANDMARK',
+                "priceMin": usd.min_price,
+                "priceMax": usd.max_price,
+                "landmarkIds": "City center"
+            }
 
-        querystring: Dict = {
-            "destinationId": destination_id,
-            "pageNumber": "1",
-            "pageSize": amount,
-            "checkIn": checkin_date,
-            "checkOut": checkout_date,
-            "adults1": "1",
-            "sortOrder": sort_order
-        }
-
-        hotels_all: Response = request("GET", url, headers=self._hotels_api_headers, params=querystring)
-        hotels_dict: Dict[str, Any] = loads(hotels_all.text)
+        hotels_all: Response = self.request_helper(request, retries=3)(
+            "GET",
+            url,
+            headers=self._hotels_api_headers,
+            params=querystring
+        )
+        hotels_dict: Dict[str, Any] = self.json_decode_helper(loads)(hotels_all.text)
 
         return hotels_dict
 
@@ -191,7 +218,12 @@ class ApiCalls:
 
         querystring = {"id": hotel_id}
 
-        pictures_all: Response = request("GET", url, headers=self._hotels_api_headers, params=querystring)
-        pictures_dict: Dict[str, Any] = loads(pictures_all.text)
+        pictures_all: Response = self.request_helper(request, retries=3)(
+            "GET",
+            url,
+            headers=self._hotels_api_headers,
+            params=querystring
+        )
+        pictures_dict: Dict[str, Any] = self.json_decode_helper(loads)(pictures_all.text)
 
         return pictures_dict

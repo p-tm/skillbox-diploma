@@ -1,6 +1,10 @@
+"""
+Описание функции
+
+"""
 import os
 
-from typing import *
+from typing import Any
 
 from api.api_calls import ApiCalls
 from classes.city import City
@@ -15,9 +19,9 @@ def cities_per_country(cid: int) -> None:
     Формирует спискок городов для выбранной страны
 
     В идеале, нужно сформировать список всех стран и городов по странам один раз при запуске бота.
-    Но, т.к. в данной конкретной работе....
+    Но, т.к. в данной конкретной работе имеем лимитированное количество запросов ....
 
-    :param cid: int - id страны
+    :param cid: id страны
 
     """
     country = countries[cid]

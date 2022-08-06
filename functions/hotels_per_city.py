@@ -1,16 +1,20 @@
+"""
+Описание функции
+
+"""
 import os
 
 from telebot import telebot
-from typing import *
+from typing import Any, Dict, List, Optional
 
 from api.api_calls import ApiCalls
 from classes.city import City
 from classes.country import Country
 from classes.hotel import Hotel
+from classes.user_state import UserState
 from classes.user_state_data import UserStateData
-from exceptions.data_unavalible import DataUnavailible
-from functions.cashfile import cashfile
 from functions.get_raw_data import get_raw_data
+from functions.get_usd import get_usd
 from config import GET_HOTELS_FROM_SERVER
 from loader import bot, countries
 
@@ -24,12 +28,9 @@ def hotels_per_city(message: telebot.types.Message) -> None:
     :param message: предыдущее сообщение в чате Telegram
 
     """
-    user: int = message.chat.id
-    chat: int = message.chat.id
-
-    data: Dict[str, UserStateData]
-    with bot.retrieve_data(user_id=user, chat_id=chat) as data:
-        usd: UserStateData = data['usd']
+    usd: UserStateData = get_usd(message=message)
+    if usd is None:
+        return
 
     country: Country = countries[usd.selected_country_id]
     city: City = country.cities[usd.selected_city_id]
@@ -59,16 +60,40 @@ def hotels_per_city(message: telebot.types.Message) -> None:
         force=GET_HOTELS_FROM_SERVER,
         fname=f_name,
         func=ApiCalls().get_hotels_per_city,
-        usd=usd
+        usd=usd,
+        page=1
     )
 
     hotels_list = hotels_raw['data']['body']['searchResults']['results']
 
-    data: Dict[int, UserStateData]
-    with bot.retrieve_data(user_id=user, chat_id=chat) as data:
-        usd = data['usd']
-
     usd.hotels.clear()
+
+    def dist_to_city_center(item: Dict) -> Optional[str]:
+        for i in item['landmarks']:
+            if i['label'] == 'City center':
+                return i['distance']
+        return None
+
+    # если bestdeal то нужно вручную отобрать отели, которые находятся
+    # в заданном диапазоне расстояний
+    # в остальных случаях сразу получаем требуемое кол-во отелей
+    hotels_list_filtered: List = []
+    if usd.state == UserState.USER_BESTDEAL_IN_PROGRESS:
+        # бёрём только те отели, у которых есть поле 'City center'
+        # и если оно есть то укладывается в заданный диапазон
+        counter = 0
+        for item in hotels_list:
+            dtcc: str = dist_to_city_center(item)
+            if dtcc is not None:
+                if usd.min_distance <= Hotel.str_to_km(dtcc) <= usd.max_distance:
+                    hotels_list_filtered.append(item)
+                    counter += 1
+            if counter == usd.hotels_amount:
+                break
+
+    else:
+        hotels_list_filtered = hotels_list
+
 
     def add_hotel(item: Dict):
         hotel = Hotel(
@@ -76,8 +101,9 @@ def hotels_per_city(message: telebot.types.Message) -> None:
             h_id=item['id'],
             h_name=item['name'],
             ppn=item['ratePlan']['price']['current'],
-            dtcc=item['landmarks'][0]['distance'],
-            addr=item['address']['streetAddress']
+            #dtcc=item['landmarks'][0]['distance'],
+            dtcc=dist_to_city_center(item),
+            addr=item['address'].get('streetAddress', 'не указан')
         )
 
         hotel.country = country.nicename
@@ -85,7 +111,7 @@ def hotels_per_city(message: telebot.types.Message) -> None:
 
         usd.hotels[item['id']] = hotel
 
-    [add_hotel(item) for item in hotels_list]
+    [add_hotel(item) for item in hotels_list_filtered]
 
     # проверим, нужно ли запрашивать фото
     if usd.photo_required:

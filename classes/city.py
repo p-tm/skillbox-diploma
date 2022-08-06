@@ -4,7 +4,7 @@
 """
 from dataclasses import dataclass
 from dataclasses import field
-from typing import *
+from typing import List
 
 
 @dataclass
@@ -13,22 +13,27 @@ class City:
     Описание сущности "город"
 
     """
-    _city_id: int
-    _country_iso: str
-    _name: str
-    _population: int
-    _dids: List[int] = field(default_factory=list)
+    _city_id: int           # id города (выдаёт hotels.com.api)
+    _country_iso: str       # iso-код страны
+    _name: str              # название города
+    _population: int        # население
+    _dids: List[int] = field(default_factory=list)   # это список destination_id которые выдаёт hotels.com.api
 
     def __init__(self, c_id: int, ciso: str, name: str, population: int) -> None:
         """
         Конструктор
 
+        :param c_id: id города
+        :param ciso: iso-код страны
+        :param name: название города
+        :param population: население
+
         """
-        self.city_id = c_id             # id города (выдаёт hotels.com.api)
-        self.country_iso = ciso         # iso-код страны
-        self.name = name                # название города
-        self.population = population    # население
-        self._dids = []                 # это список destination_id которые выдаёт hotels.com.api
+        self.city_id = c_id
+        self.country_iso = ciso
+        self.name = name
+        self.population = population
+        self._dids = []
 
     def add_did(self, did: int) -> None:
         """

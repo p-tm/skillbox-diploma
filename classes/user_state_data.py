@@ -8,6 +8,7 @@ from telebot import telebot
 from typing import Dict, Optional, Tuple, Union
 
 from classes.hotels import Hotels
+from classes.user_state import UserState
 
 
 @dataclass
@@ -33,6 +34,13 @@ class UserStateData:
     _max_checkout_date: Optional[datetime]          # максимальная дата выезда
     _hotels: Hotels                                 # перечень выбранных отелей
     history: 'HistoryLog'                           # логгер
+    _min_price: float                               # минимальная цена за ночь
+    _max_price: float                               # максимальная цена за ночь
+    _min_distance: float                            # минимальное расстояние до центра
+    _max_distance: float                            # максимальное расстояние до центра
+    _user: int                                      # user_id
+    _chat: int                                      # chat_id
+    _state: str                                     # state (получается из telebot.handler_backends.State)
 
     def __init__(self) -> None:
         """
@@ -57,6 +65,14 @@ class UserStateData:
         self._max_checkout_date = None
         self._hotels: Hotels = Hotels()
         self.history = HistoryLog()
+        self._min_price = None
+        self._max_price = None
+        self._min_distance = None
+        self._max_distance = None
+
+        self._user = None
+        self._chat = None
+        self._state = None
 
         self.reinit_keyboard()
 
@@ -157,6 +173,14 @@ class UserStateData:
 
         if self._photo_required:
             summary_message += '\n<i>Количество фото:</i> {}'.format(self._photos_amount)
+
+        if self._state == UserState.USER_BESTDEAL_IN_PROGRESS:
+            summary_message += '\n<i>Цена:</i>'
+            summary_message += '\n<i>Минимум:</i> {}$'.format(self._min_price)
+            summary_message += '\n<i>Максимум:</i> {}$'.format(self._max_price)
+            summary_message += '\n<i>Расстояние до центра города:</i>'
+            summary_message += '\n<i>Минимум:</i> {}км'.format(self._min_distance)
+            summary_message += '\n<i>Максимум:</i> {}км'.format(self._max_distance)
 
         return summary_message
 
@@ -276,3 +300,56 @@ class UserStateData:
     @property
     def keyboard_maker(self):
         return self._keyboard_maker
+
+    @property
+    def min_price(self):
+        return self._min_price
+    @min_price.setter
+    def min_price(self, val):
+        self._min_price = val
+
+    @property
+    def max_price(self):
+        return self._max_price
+    @max_price.setter
+    def max_price(self, val):
+        self._max_price = val
+
+    @property
+    def min_distance(self):
+        return self._min_distance
+    @min_distance.setter
+    def min_distance(self, val):
+        self._min_distance = val
+
+    @property
+    def max_distance(self):
+        return self._max_distance
+    @max_distance.setter
+    def max_distance(self, val):
+        self._max_distance = val
+
+    @property
+    def user(self):
+        return self._user
+    @user.setter
+    def user(self, val):
+        self._user = val
+
+    @property
+    def chat(self):
+        return self._chat
+    @chat.setter
+    def chat(self, val):
+        self._chat = val
+
+    @property
+    def state(self):
+        return self._state
+    @state.setter
+    def state(self, val):
+        self._state = val
+
+
+
+

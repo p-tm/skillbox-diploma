@@ -3,12 +3,12 @@
 
 """
 from telebot import telebot
-from typing import Any, Dict
 
 from classes.user_state import UserState
 from classes.user_state_data import UserStateData
 from commands.menu import menu, main_menu_buttons_callback_factory
 from config import DELETE_OLD_KEYBOARDS, MainMenuCommands
+from functions.get_usd import get_usd
 from functions.print_results_data import print_results_data
 from functions.send_message_helper import send_message_helper
 from loader import bot
@@ -47,29 +47,32 @@ def history(message: telebot.types.Message) -> None:
     :param message: предыдущее сообщение из чата Telegram
 
     """
-    user: int = message.chat.id
-    chat: int = message.chat.id
-    bot.set_state(user_id=user, chat_id=chat, state=UserState.user_history_in_progress)
+    usd: UserStateData = get_usd(message=message)
+    if usd is None:
+        return
 
-    history_started_message: str = 'История'
+    bot.set_state(user_id=usd.user, chat_id=usd.chat, state=UserState.user_history_in_progress)
+
+    history_started_message: str = 'История запросов пользователя <b>{} {}</b>'.format(
+        message.chat.first_name,
+        message.chat.last_name
+    )
     msg: telebot.types.Message = send_message_helper(bot.send_message, retries=3)(
-        chat_id=chat,
-        text=history_started_message
+        chat_id=usd.chat,
+        text=history_started_message,
+        parse_mode='HTML'
     )
 
     """  логгирование """
-    data: Dict[str, Any]
-    with bot.retrieve_data(user_id=user, chat_id=chat) as data:
-        data['usd'].history.add_rec('UCMD', '/history')
+    usd.history.add_rec('UCMD', '/history')
 
-
-    for rec in data['usd'].history.get_from_file():
+    for rec in usd.history.get_from_file():
 
         if rec.type == 'UCMD':
 
             text: str = '{} {}'.format(rec.dt, rec.content)
             send_message_helper(bot.send_message, retries=3)(
-                chat_id=chat,
+                chat_id=usd.chat,
                 text=text
             )
 
@@ -78,13 +81,13 @@ def history(message: telebot.types.Message) -> None:
             usd: UserStateData = rec.usd
             summary_message: str = usd.summary(history=True)
             send_message_helper(bot.send_message, retries=3)(
-                chat_id=chat,
+                chat_id=usd.chat,
                 text=summary_message,
                 parse_mode='HTML'
             )
             suitable_hotels_message: str = 'Список подходящих отелей:'
             send_message_helper(bot.send_message, retries=3)(
-                chat_id=chat,
+                chat_id=usd.chat,
                 text=suitable_hotels_message
             )
             print_results_data(message, usd)
@@ -94,9 +97,7 @@ def history(message: telebot.types.Message) -> None:
     horiz_delimiter = '----------------------------------------------------------------------'
 
     send_message_helper(bot.send_message, retries=3)(
-        chat_id=chat,
+        chat_id=usd.chat,
         text=horiz_delimiter
     )
     menu(message=message)
-
-
