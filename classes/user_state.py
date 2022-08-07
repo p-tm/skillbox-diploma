@@ -16,6 +16,7 @@ class UserState(StatesGroup):
     user_highprice_in_progress = State()
     user_bestdeal_in_progress = State()
     user_history_in_progress = State()
+    user_help_in_progress = State()
 
     USER_NONE = 'user_none'
     USER_STARTED_BOT = 'user_started_bot'
@@ -24,3 +25,5 @@ class UserState(StatesGroup):
     USER_HIGHPRICE_IN_PROGRESS = 'user_highprice_in_progress'
     USER_BESTDEAL_IN_PROGRESS = 'user_bestdeal_in_progress'
     USER_HISTORY_IN_PROGRESS = 'user_history_in_progress'
+    USER_HELP_IN_PROGRESS = 'user_help_in_progress'
+

@@ -3,7 +3,6 @@
 
 """
 from telebot import telebot
-from typing import Any, Dict
 
 from classes.user_state import UserState
 from classes.user_state_data import UserStateData

@@ -13,7 +13,8 @@ from telebot.storage import StateMemoryStorage
 from typing import TextIO
 
 from classes.countries import Countries
-from config import BOT_TOKEN, STORE_DATA_LOCALLY, LOCAL_STORAGE
+from classes.help_parser import HelpParser
+from config import BOT_TOKEN, STORE_DATA_LOCALLY, LOCAL_STORAGE, HELP_SOURCE
 from exceptions.data_unavalible import DataUnavailible
 from exceptions.fatal_error import FatalError
 from functions.cashfile import cashfile
@@ -51,6 +52,7 @@ select_country_buttons_callback_factory = CallbackData('cmd_id', prefix='country
 select_city_buttons_callback_factory = CallbackData('cmd_id', prefix='city')
 yesno_buttons_callback_factory = CallbackData('cmd_id', prefix='yes_no')
 input_date_callback_factory = CallbackData('type', 'content', prefix='date')
+select_help_callback_factory = CallbackData('cmd_id', prefix='help')
 
 # doesn't throw exceptions
 bot: TeleBot = TeleBot(token=BOT_TOKEN, state_storage=storage)
@@ -71,4 +73,8 @@ try:
 except FatalError as e:
     console_message('Завершение работы. Не удалось инициализировать бот. ' + str(e))
     sys.exit(4)
+
+f_name: str = HELP_SOURCE
+help_parser = HelpParser(f_name)
+
 

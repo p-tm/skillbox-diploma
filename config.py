@@ -19,6 +19,7 @@ STORE_DATA_LOCALLY = True       # запоминать все нaкопленн�
                                 # чтобы можно было посмотреть историю поиска после перезапуска бота
 
 LOCAL_STORAGE = 'countries.cash'    # файл для хранения накопленных данных
+HELP_SOURCE = 'help_source.html'    # содержание хелпа
 
 COUNTRIES_API_HEADERS = {
     "X-RapidAPI-Key": "fba64e5cf9msh04aa44d741bf7c4p107cf8jsn92e55fbb6b9f",
@@ -58,11 +59,10 @@ MAIN_MENU_BUTTONS = [
     {'id': MainMenuCommands.HIGHPRICE.value, 'caption': '💲  Подобрать самые дорогие отели'},
     {'id': MainMenuCommands.BESTDEAL.value, 'caption': '👍  Подобрать по цене и расположению'},
     {'id': MainMenuCommands.HISTORY.value, 'caption': '📜  Посмотреть историю поиска'},
-    {'id': MainMenuCommands.NONE.value, 'caption': 'ℹ  Получить справку о работе с ботом'}
+    {'id': MainMenuCommands.HELP.value, 'caption': 'ℹ  Получить справку о работе с ботом'}
 ]
 
 SUBSTATE_NONE = 0
-
 
 class LowpriceSubstates(Enum):
     """ Числовые идентификаторы состояний при выполнении "основной" команды /lowprice """
