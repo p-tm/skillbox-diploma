@@ -13,6 +13,7 @@ from functions.get_usd import get_usd
 from functions.hotels_per_city import hotels_per_city
 from functions.send_message_helper import send_message_helper
 from functions.show_results import show_results
+from functions.start_new import start_new
 from loader import bot, countries
 
 
@@ -47,7 +48,7 @@ def show_summary(message: telebot.types.Message) -> None:
     elif usd.state == UserState.USER_BESTDEAL_IN_PROGRESS:
         usd.substate = BestdealSubstates.REQUEST_HOTELS.value
 
-    please_wait_message: str = 'Пожалуйста подождите. Выполнятеся запрос к удалённому серверу.'
+    please_wait_message: str = 'Пожалуйста подождите. Выполняется запрос к удалённому серверу.'
 
     # просим подождать
     send_message_helper(bot.send_message, retries=3)(
@@ -60,10 +61,11 @@ def show_summary(message: telebot.types.Message) -> None:
     except DataUnavailible as e:
         console_message('Не могу получить список отелей.' + str(e))
         send_message_helper(bot.send_message, retries=3)(
-            user_id=usd.user,
             chat_id=usd.chat,
             text="🚫 Не могу получить список отелей."
          )
+        start_new(message=message, usd=usd)
+        return
 
     """ переходим к отображению информации об отелях """
 

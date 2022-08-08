@@ -26,7 +26,7 @@ def select_photos_amount(message: telebot.types.Message) -> None:
     if usd is None:
         return
 
-    photos_amount_message: str = 'Введите количество фотографий:'
+    photos_amount_message: str = 'Введите количество фотографий (маусимум {}):'.format(MAX_PHOTOS_AMOUNT)
 
     # приглашение
     msg: telebot.types.Message  = send_message_helper(bot.send_message)(

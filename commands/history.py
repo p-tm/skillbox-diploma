@@ -11,6 +11,7 @@ from config import DELETE_OLD_KEYBOARDS, MainMenuCommands
 from functions.get_usd import get_usd
 from functions.print_results_data import print_results_data
 from functions.send_message_helper import send_message_helper
+from functions.start_new import start_new
 from loader import bot
 
 @bot.message_handler(
@@ -93,11 +94,5 @@ def history(message: telebot.types.Message) -> None:
             print_results_data(message, usd)
 
     """ на этом процесс закончен, выдаём главное меню для новго выбора """
+    start_new(message=message, usd=usd)
 
-    horiz_delimiter = '----------------------------------------------------------------------'
-
-    send_message_helper(bot.send_message, retries=3)(
-        chat_id=usd.chat,
-        text=horiz_delimiter
-    )
-    menu(message=message)

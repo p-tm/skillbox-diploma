@@ -3,7 +3,7 @@
 
 """
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 
 @dataclass
@@ -60,16 +60,20 @@ class Hotel:
         self.city = city.name
         self.hotel_id = h_id
         self.name = h_name
-        self.price_per_night_str = ppn
         self._full_address = addr
 
-        # ppn приходит в формате '$100' - распарсим
+        # ppn приходит в формате '$1,000' - распарсим
         if ppn is not None:
+            # убираем разделитель тысяч если есть
+            tmp: str = ppn[1:]
+            for symbol in ('.', ','):
+                tmp: str = tmp.replace(symbol, '')
             try:
-                self.price_per_night = int(ppn[1:])
+                self.price_per_night = int(tmp)
             except ValueError:
                 raise
             self._currency = ppn[0]
+            self.price_per_night_str = f'{self._currency}{self.price_per_night}'
 
         # формируем ссылку на страницу отеля
         self.url = 'https://www.hotels.com/ho{}?q-check-in={}&q-check-out={}&q-rooms=1'.format(
