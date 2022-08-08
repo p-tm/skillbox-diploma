@@ -9,20 +9,22 @@ from telebot.handler_backends import State, StatesGroup
 from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
 from telebot.callback_data import CallbackData, CallbackDataFilter
 from telebot.custom_filters import AdvancedCustomFilter, SimpleCustomFilter
-from typing import Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from classes.user_state import UserState
 from classes.user_state_data import UserStateData
 from classes.countries import Countries
 from commands.select_city import select_city
 from config import (
-    BestdealSubstates, DELETE_OLD_KEYBOARDS, HighpriceSubstates, LowpriceSubstates, MAX_KEYS_PER_KEYBOARD
+    BestdealSubstates, DELETE_OLD_KEYBOARDS, HighpriceSubstates, LowpriceSubstates, MAX_KEYS_PER_KEYBOARD,
+    POPULAR_COUNTRIES
 )
 from exceptions.data_unavalible import DataUnavailible
 from functions.cities_per_country import cities_per_country
 from functions.console_message import console_message
 from functions.send_message_helper import send_message_helper
 from functions.get_usd import get_usd
+from functions.start_new import start_new
 from loader import bot, storage, countries, select_country_buttons_callback_factory
 
 
@@ -74,6 +76,24 @@ def keyboard_select_country(
 
     """
     _countries = list(countries.values())   # перечень стран в виде List - для удобства
+    """ немного отсортируем, так, чтобы в начале оказались наиболее популярные """
+    def exchange(src: List[Any], i_old: int, i_new: int):
+        """ берёт i_old элемент списка и ставит его на место i_new """
+        item: Any = src.pop(i_old)
+        src.insert(i_new, item)
+
+    # for i, popular_iso in enumerate(POPULAR_COUNTRIES):
+    #     for j, country in enumerate(_countries):
+    #         if country.iso == popular_iso:
+    #             exchange(_countries, j, i)
+    #             break
+    [
+        exchange(_countries, j, i)
+        for i, popular_iso in enumerate(POPULAR_COUNTRIES)
+        for j, country in enumerate(_countries)
+        if country.iso == popular_iso
+    ]
+
     keys_per_kb: int = MAX_KEYS_PER_KEYBOARD
     number_of_keyboards: int = math.ceil(countries.size / keys_per_kb)  # сколько частичных клавиатур получится
     first_row: int = int((current - 1) * keys_per_kb/3) # номер первой строки в частичной клавиатуре
@@ -212,12 +232,15 @@ def country_selector_button(call: telebot.types.CallbackQuery) -> None:
     except DataUnavailible as e:
         console_message('Не могу получить список городов.' + str(e))
         send_message_helper(bot.send_message, retries=3)(
-            user_id=usd.user,
             chat_id=usd.chat,
             text="🚫 Не могу получить список городов."
          )
+        start_new(message=call.message, usd=usd)
+        return
 
     select_city(cid=selected_country_id, message=call.message)
+
+
 
 
 

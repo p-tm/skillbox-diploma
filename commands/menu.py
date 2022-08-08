@@ -73,6 +73,7 @@ def menu(message: telebot.types.Message) -> None:
     # "исходное" состояние - демонстрируется главное меню
     bot.set_state(user_id=usd.user, state=UserState.user_selects_request, chat_id=usd.chat)
     usd.substate = SUBSTATE_NONE
+    usd.reinit_keyboard()
 
     kbrd_select_main_cmd: telebot.types.InlineKeyboardMarkup = keyboard_select_main_cmd()
 

@@ -13,6 +13,8 @@ from classes.country import Country
 from classes.hotel import Hotel
 from classes.user_state import UserState
 from classes.user_state_data import UserStateData
+from exceptions.data_unavalible import DataUnavailible
+from functions.console_message import console_message
 from functions.get_raw_data import get_raw_data
 from functions.get_usd import get_usd
 from config import GET_HOTELS_FROM_SERVER
@@ -44,7 +46,11 @@ def hotels_per_city(message: telebot.types.Message) -> None:
         city_name=city.name
     )
 
-    locations_list: List[Dict[str, str]] = locations_raw['suggestions'][0]['entities'] # "0" is for CITY_GROUP
+    try:
+        locations_list: List[Dict[str, str]] = locations_raw['suggestions'][0]['entities'] # "0" is for CITY_GROUP
+    except Exception as e:
+        console_message(str(e))
+        raise DataUnavailible
 
     item: Dict[str, int]
     [city.add_did(item['destinationId']) for item in locations_list]
@@ -64,7 +70,11 @@ def hotels_per_city(message: telebot.types.Message) -> None:
         page=1
     )
 
-    hotels_list = hotels_raw['data']['body']['searchResults']['results']
+    try:
+        hotels_list = hotels_raw['data']['body']['searchResults']['results']
+    except Exception as e:
+        console_message(str(e))
+        raise DataUnavailible
 
     usd.hotels.clear()
 
@@ -131,7 +141,11 @@ def hotels_per_city(message: telebot.types.Message) -> None:
                 hotel_id=item.hotel_id
             )
 
-            photos_list: List[str] = photos_raw['hotelImages']
+            try:
+                photos_list: List[str] = photos_raw['hotelImages']
+            except Exception as e:
+                console_message(str(e))
+                raise DataUnavailible
 
             item.clear_images()
 

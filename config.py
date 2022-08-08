@@ -107,3 +107,6 @@ class BestdealSubstates(Enum):
     SHOW_SUMMARY = 62            # выводим резюме по выбранным опциям
     REQUEST_HOTELS = 63          # запрашиваем отели
     SHOW_RESULTS = 64           # выводим результаты запроса
+
+POPULAR_COUNTRIES = ('US','RU','TR','EG','ES','GR')
+

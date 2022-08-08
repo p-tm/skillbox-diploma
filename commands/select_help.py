@@ -11,6 +11,7 @@ from classes.user_state_data import UserStateData
 from commands.menu import menu
 from functions.get_usd import get_usd
 from functions.send_message_helper import send_message_helper
+from functions.start_new import start_new
 from loader import bot, select_help_callback_factory, help_parser
 
 
@@ -57,16 +58,8 @@ def select_help(call: telebot.types.CallbackQuery) -> None:
         parse_mode='HTML'
     )
 
-    """ на этом процесс закончен, выдаём главное меню для новго выбора """
-
-    horiz_delimiter = '----------------------------------------------------------------------'
-
-    send_message_helper(bot.send_message, retries=3)(
-        chat_id=usd.chat,
-        text=horiz_delimiter
-    )
-
-    menu(message=call.message)
+    """ на этом процесс закончен, выдаём главное меню для нового выбора """
+    start_new(message=call.message, usd=usd)
 
 
 

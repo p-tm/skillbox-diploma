@@ -53,7 +53,7 @@ def stop(message: telebot.types.Message) -> None:
     # сбрасываем все значимые состояния
     bot.set_state(user_id=usd.user, state=UserState.user_started_bot, chat_id=usd.chat)
 
-    usd.reinit_keyboard()
-    usd.substate = SUBSTATE_NONE
+    # usd.reinit_keyboard()
+    # usd.substate = SUBSTATE_NONE
 
     menu(message=message)

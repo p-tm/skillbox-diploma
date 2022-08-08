@@ -14,6 +14,7 @@ from functions.cashfile import cashfile
 from functions.get_usd import get_usd
 from functions.print_results_data import print_results_data
 from functions.send_message_helper import send_message_helper
+from functions.start_new import start_new
 from loader import bot, countries
 
 
@@ -42,7 +43,7 @@ def show_results(message: telebot.types.Message) -> None:
         x: int = usd.hotels.size % 10
         found: str = ''
         end_word: str = ''
-        if x == 0 or x in range(5,20) or x in range(25,30):
+        if x == 0 or x in range(5, 20) or x in range(25, 30):
             found = 'найдено'
             end_word = 'отелей'
         elif x == 1:
@@ -77,13 +78,6 @@ def show_results(message: telebot.types.Message) -> None:
         with open(f_name, mode='w', encoding='utf-8', errors='replace') as f:
             f.write(bobj.__str__())
 
-    """ на этом процесс закончен, выдаём главное меню для новго выбора """
+    """ на этом процесс закончен, выдаём главное меню для нового выбора """
+    start_new(message=message, usd=usd)
 
-    horiz_delimiter = '----------------------------------------------------------------------'
-
-    send_message_helper(bot.send_message, retries=3)(
-        chat_id=usd.chat,
-        text=horiz_delimiter
-    )
-
-    menu(message=message)
