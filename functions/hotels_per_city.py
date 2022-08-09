@@ -50,9 +50,9 @@ def hotels_per_city(message: telebot.types.Message) -> None:
     if suggestions == 0:
         raise DataUnavailible('Ошибка в структуре данных при получении перечня отелей')
     group: Dict = suggestions[0]
-    locations_list: List = group.get('entities', [])
-    # if not locations_list:
-    #     raise DataUnavailible('Ошибка в структуре данных при получении перечня отелей')
+    locations_list: Union[int, List] = group.get('entities', 0)
+    if locations_list == 0:
+        raise DataUnavailible('Ошибка в структуре данных при получении перечня отелей')
     # locations_list: List[Dict[str, str]] = locations_raw['suggestions'][0]['entities'] # "0" is for CITY_GROUP
 
     if not locations_list:
@@ -101,8 +101,8 @@ def hotels_per_city(message: telebot.types.Message) -> None:
     if search_results == 0:
         console_message('Ошибка в структуре данных при получении перечня отелей')
         raise DataUnavailible('Ошибка в структуре данных при получении перечня отелей')
-    hotels_list: List = search_results.get('results', [])
-    if not hotels_list:
+    hotels_list: Union[int, List] = search_results.get('results', 0)
+    if hotels_list == 0:
         console_message('Ошибка в структуре данных при получении перечня отелей')
         raise DataUnavailible('Ошибка в структуре данных при получении перечня отелей')
 
@@ -177,9 +177,9 @@ def hotels_per_city(message: telebot.types.Message) -> None:
             #     console_message(str(e))
             #     raise DataUnavailible
 
-            photos_list: List[str] = photos_raw.get('hotelImages', [])
+            photos_list: Union[int, List] = photos_raw.get('hotelImages', 0)
 
-            if not photos_list:
+            if photos_list == 0:
                 console_message('Ошибка в структуре данных при получении перечня отелей')
                 raise DataUnavailible('Ошибка в структуре данных при получении перечня отелей')
 
