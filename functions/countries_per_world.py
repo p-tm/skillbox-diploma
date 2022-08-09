@@ -4,7 +4,7 @@
 """
 import os
 
-from typing import Any, Dict
+from typing import Any, Dict, Union
 
 from api.api_calls import ApiCalls
 from classes.countries import Countries
@@ -36,7 +36,25 @@ def countries_per_world(countries: Countries) -> None:
         func=ApiCalls().get_countries_per_world
     )
 
-    def add_country(item):
-        countries[item['id']] = Country(item['id'], item['iso'], item['countryname'], item['nicename'])
+    def add_country(item: Dict) -> None:
+        """
+        Добавляет объект "страна" в словарь
+        
+        :param item:
 
-    [add_country(item) for item in countries_raw]
+        """
+        id: int = item.get('id', 0)
+        iso: Union[int, str] = item.get('iso', 0)
+        countryname: Union[int, str] = item.get('countryname', 0)
+        nicename: Union[int, str] = item.get('nicename', 0)
+
+        if id == 0 or iso == 0 or countryname == 0 or nicename == 0:
+            raise DataUnavailible('Ошибка в структуре данных при получении перечня стран')
+
+        # countries[item['id']] = Country(item['id'], item['iso'], item['countryname'], item['nicename'])
+        countries[item['id']] = Country(id, iso, countryname, nicename)
+
+    try:
+        [add_country(item) for item in countries_raw]
+    except DataUnavailible:
+        raise

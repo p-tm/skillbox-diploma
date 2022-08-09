@@ -5,7 +5,7 @@
 import os
 
 from telebot import telebot
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from api.api_calls import ApiCalls
 from classes.city import City
@@ -46,18 +46,28 @@ def hotels_per_city(message: telebot.types.Message) -> None:
         city_name=city.name
     )
 
-    try:
-        locations_list: List[Dict[str, str]] = locations_raw['suggestions'][0]['entities'] # "0" is for CITY_GROUP
-    except Exception as e:
-        console_message(str(e))
-        raise DataUnavailible
+    suggestions: Union[int, Dict] = locations_raw.get('suggestions', 0)
+    if suggestions == 0:
+        raise DataUnavailible('Ошибка в структуре данных при получении перечня отелей')
+    group: Dict = suggestions[0]
+    locations_list: List = group.get('entities', [])
+    # if not locations_list:
+    #     raise DataUnavailible('Ошибка в структуре данных при получении перечня отелей')
+    # locations_list: List[Dict[str, str]] = locations_raw['suggestions'][0]['entities'] # "0" is for CITY_GROUP
 
     if not locations_list:
         console_message('Получен пустой список destination_id.')
         raise DataUnavailible
 
+    # city.dids.clear()
+
     item: Dict[str, int]
-    [city.add_did(item['destinationId']) for item in locations_list]
+    for item in locations_list:
+        did: int = item.get('destinationId', 0)
+        if did == 0:
+            raise DataUnavailible('Ошибка в структуре данных при получении перечня отелей')
+        city.add_did(did)
+    # [city.add_did(item['destinationId']) for item in locations_list]
 
     # теперь собственно для каждого отеля надо запросить детали
     # тут надо каждый раз честно запрашивать, потому что
@@ -74,11 +84,27 @@ def hotels_per_city(message: telebot.types.Message) -> None:
         page=1
     )
 
-    try:
-        hotels_list = hotels_raw['data']['body']['searchResults']['results']
-    except Exception as e:
-        console_message(str(e))
-        raise DataUnavailible
+    # try:
+    #     hotels_list = hotels_raw['data']['body']['searchResults']['results']
+    # except Exception as e:
+    #     console_message(str(e))
+    #     raise DataUnavailible
+    data: Union[int, Dict] = hotels_raw.get('data', 0)
+    if data == 0:
+        console_message('Ошибка в структуре данных при получении перечня отелей')
+        raise DataUnavailible('Ошибка в структуре данных при получении перечня отелей')
+    body: Union[int, Dict] = data.get('body', 0)
+    if body == 0:
+        console_message('Ошибка в структуре данных при получении перечня отелей')
+        raise DataUnavailible('Ошибка в структуре данных при получении перечня отелей')
+    search_results: Union[int, Dict] = body.get('searchResults', 0)
+    if search_results == 0:
+        console_message('Ошибка в структуре данных при получении перечня отелей')
+        raise DataUnavailible('Ошибка в структуре данных при получении перечня отелей')
+    hotels_list: List = search_results.get('results', [])
+    if not hotels_list:
+        console_message('Ошибка в структуре данных при получении перечня отелей')
+        raise DataUnavailible('Ошибка в структуре данных при получении перечня отелей')
 
     usd.hotels.clear()
 
@@ -145,11 +171,17 @@ def hotels_per_city(message: telebot.types.Message) -> None:
                 hotel_id=item.hotel_id
             )
 
-            try:
-                photos_list: List[str] = photos_raw['hotelImages']
-            except Exception as e:
-                console_message(str(e))
-                raise DataUnavailible
+            # try:
+            #     photos_list: List[str] = photos_raw['hotelImages']
+            # except Exception as e:
+            #     console_message(str(e))
+            #     raise DataUnavailible
+
+            photos_list: List[str] = photos_raw.get('hotelImages', [])
+
+            if not photos_list:
+                console_message('Ошибка в структуре данных при получении перечня отелей')
+                raise DataUnavailible('Ошибка в структуре данных при получении перечня отелей')
 
             item.clear_images()
 
