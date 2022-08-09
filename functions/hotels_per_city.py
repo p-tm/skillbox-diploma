@@ -37,37 +37,48 @@ def hotels_per_city(message: telebot.types.Message) -> None:
     country: Country = countries[usd.selected_country_id]
     city: City = country.cities[usd.selected_city_id]
 
+    city.dids.clear()
+    usd.hotels.clear()
+
     f_name: str = 'city_did_raw_' + country.iso + '_' + city.name + '.txt'
 
     locations_raw: Dict[str, Any] = get_raw_data(
         force=False,
         fname=f_name,
         func=ApiCalls().get_city_destination_id,
+        country_name=country.nicename,
         city_name=city.name
     )
 
-    suggestions: Union[int, Dict] = locations_raw.get('suggestions', 0)
-    if suggestions == 0:
-        raise DataUnavailible('Ошибка в структуре данных при получении перечня отелей')
-    group: Dict = suggestions[0]
-    locations_list: Union[int, List] = group.get('entities', 0)
-    if locations_list == 0:
-        raise DataUnavailible('Ошибка в структуре данных при получении перечня отелей')
-    # locations_list: List[Dict[str, str]] = locations_raw['suggestions'][0]['entities'] # "0" is for CITY_GROUP
+    # suggestions: Union[int, Dict] = locations_raw.get('suggestions', 0)
+    # if suggestions == 0:
+    #     raise DataUnavailible('Ошибка в структуре данных при получении перечня отелей')
+    # group: Dict = suggestions[0]
+    # locations_list: Union[int, List] = group.get('entities', 0)
+    # if locations_list == 0:
+    #     raise DataUnavailible('Ошибка в структуре данных при получении перечня отелей')
+
+    try:
+        locations_list: List[Dict[str, str]] = locations_raw['suggestions'][0]['entities'] # "0" is for CITY_GROUP
+    except Exception as e:
+        console_message(str(e))
+        raise DataUnavailible
 
     if not locations_list:
         console_message('Получен пустой список destination_id.')
+        return
+
+    # item: Dict[str, int]
+    # for item in locations_list:
+    #     did: int = item.get('destinationId', 0)
+    #     if did == 0:
+    #         raise DataUnavailible('Ошибка в структуре данных при получении перечня отелей')
+    #     city.add_did(did)
+    try:
+        [city.add_did(item['destinationId']) for item in locations_list]
+    except Exception as e:
+        console_message(str(e))
         raise DataUnavailible
-
-    # city.dids.clear()
-
-    item: Dict[str, int]
-    for item in locations_list:
-        did: int = item.get('destinationId', 0)
-        if did == 0:
-            raise DataUnavailible('Ошибка в структуре данных при получении перечня отелей')
-        city.add_did(did)
-    # [city.add_did(item['destinationId']) for item in locations_list]
 
     # теперь собственно для каждого отеля надо запросить детали
     # тут надо каждый раз честно запрашивать, потому что
@@ -106,7 +117,9 @@ def hotels_per_city(message: telebot.types.Message) -> None:
         console_message('Ошибка в структуре данных при получении перечня отелей')
         raise DataUnavailible('Ошибка в структуре данных при получении перечня отелей')
 
-    usd.hotels.clear()
+    if not hotels_list:
+        console_message('Получен пустой список отелей.')
+        return
 
     def dist_to_city_center(item: Dict) -> Optional[str]:
         for i in item['landmarks']:
@@ -171,17 +184,17 @@ def hotels_per_city(message: telebot.types.Message) -> None:
                 hotel_id=item.hotel_id
             )
 
-            # try:
-            #     photos_list: List[str] = photos_raw['hotelImages']
-            # except Exception as e:
-            #     console_message(str(e))
-            #     raise DataUnavailible
+            try:
+                photos_list: List[str] = photos_raw['hotelImages']
+            except Exception as e:
+                console_message(str(e))
+                raise DataUnavailible
 
-            photos_list: Union[int, List] = photos_raw.get('hotelImages', 0)
-
-            if photos_list == 0:
-                console_message('Ошибка в структуре данных при получении перечня отелей')
-                raise DataUnavailible('Ошибка в структуре данных при получении перечня отелей')
+            # photos_list: Union[int, List] = photos_raw.get('hotelImages', 0)
+            #
+            # if photos_list == 0:
+            #     console_message('Ошибка в структуре данных при получении перечня отелей')
+            #     raise DataUnavailible('Ошибка в структуре данных при получении перечня отелей')
 
             item.clear_images()
 

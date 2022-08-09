@@ -6,6 +6,8 @@ import pickle
 
 from telebot import telebot
 
+from classes.country import Country
+from classes.city import City
 from classes.hotel import Hotel
 from classes.user_state_data import UserStateData
 from commands.menu import menu
@@ -29,13 +31,21 @@ def show_results(message: telebot.types.Message) -> None:
     if usd is None:
         return
 
-    nothing_found_message: str = 'По Вашему запросу ничего не найдено'
+    result_message: str = ''
+
+    country: Country = countries[usd.selected_country_id]
+    city: City = country.cities[usd.selected_city_id]
 
     if usd.hotels.size == 0:
 
+        if not city.dids:
+            result_message = 'Нет информации об отелях в городе {}'.format(city.name)
+        else:
+            result_message = 'По Вашему запросу ничего не найдено'
+
         send_message_helper(bot.send_message, retries=3)(
             chat_id=usd.chat,
-            text=nothing_found_message
+            text=result_message
         )
 
     else:

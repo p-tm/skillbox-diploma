@@ -118,7 +118,7 @@ class ApiCalls:
 
         return cities_dict
 
-    def get_city_destination_id(self, city_name: str) -> Dict[str, Any]:
+    def get_city_destination_id(self, country_name: str, city_name: str) -> Dict[str, Any]:
         """
         Возвращает 'destination_id' по указанному городу (по строковому имени)
 
@@ -127,7 +127,7 @@ class ApiCalls:
         """
         url = "https://hotels4.p.rapidapi.com/locations/v2/search"
 
-        querystring = {"query": city_name}
+        querystring = {"query": f'{country_name} {city_name}'}
 
         location_all: Response = self.request_helper(request, retries=3)(
             "GET",
