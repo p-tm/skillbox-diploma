@@ -7,10 +7,12 @@ from telebot import telebot
 from classes.user_state import UserState
 from classes.user_state_data import UserStateData
 from commands.select_country import select_country
-from config import HighpriceSubstates, MainMenuCommands
+from config import MainMenuCommands
 from functions.get_usd import get_usd
 from functions.send_message_helper import send_message_helper
 from loader import bot, main_menu_buttons_callback_factory
+from states import HighpriceSubstates
+
 
 @bot.message_handler(
     state=[UserState.user_selects_request],

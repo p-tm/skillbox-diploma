@@ -13,11 +13,11 @@ from typing import Dict, Optional, Tuple
 from classes.user_state import UserState
 from classes.user_state_data import UserStateData
 from commands.select_hotels_amount import select_hotels_amount
-from config import BestdealSubstates, DELETE_OLD_KEYBOARDS, HighpriceSubstates, LowpriceSubstates, MAX_KEYS_PER_KEYBOARD
+from config import DELETE_OLD_KEYBOARDS, MAX_KEYS_PER_KEYBOARD
 from functions.get_usd import get_usd
 from functions.send_message_helper import send_message_helper
-
 from loader import bot, countries, select_city_buttons_callback_factory
+from states import BestdealSubstates, LowpriceSubstates, HighpriceSubstates
 
 
 # select_city_buttons_callback_factory = CallbackData('cmd_id', prefix='city')

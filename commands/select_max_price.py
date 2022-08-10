@@ -7,13 +7,12 @@ from telebot import telebot
 from classes.user_state import UserState
 from classes.user_state_data import UserStateData
 from commands.select_min_distance import select_min_distance
-from config import (
-    BestdealSubstates, DELETE_OLD_KEYBOARDS, HighpriceSubstates, LowpriceSubstates, MAX_HOTELS_AMOUNT, MAX_PRICE
-)
+from config import DELETE_OLD_KEYBOARDS, MAX_HOTELS_AMOUNT, MAX_PRICE
 from functions.get_usd import get_usd
 from functions.send_message_helper import send_message_helper
 from functions.value_valid import value_valid
 from loader import bot
+from states import BestdealSubstates, LowpriceSubstates, HighpriceSubstates
 
 
 def select_max_price(message: telebot.types.Message) -> None:

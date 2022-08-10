@@ -81,3 +81,4 @@ def cmd_help(message: telebot.types.Message) -> None:
         reply_markup=keyboard
     )
 
+    usd.history.add_rec('UCMD', '/highprice')

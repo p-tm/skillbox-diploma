@@ -6,7 +6,6 @@ from telebot import telebot
 
 from classes.user_state import UserState
 from classes.user_state_data import UserStateData
-from config import BestdealSubstates, HighpriceSubstates, LowpriceSubstates
 from exceptions.data_unavalible import DataUnavailible
 from functions.console_message import console_message
 from functions.get_usd import get_usd
@@ -15,6 +14,7 @@ from functions.send_message_helper import send_message_helper
 from functions.show_results import show_results
 from functions.start_new import start_new
 from loader import bot, countries
+from states import BestdealSubstates, HighpriceSubstates, LowpriceSubstates
 
 
 def show_summary(message: telebot.types.Message) -> None:

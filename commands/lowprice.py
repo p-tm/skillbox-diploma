@@ -8,10 +8,11 @@ from classes.user_state import UserState
 from classes.user_state_data import UserStateData
 from commands.menu import main_menu_buttons_callback_factory
 from commands.select_country import select_country
-from config import DELETE_OLD_KEYBOARDS, MainMenuCommands, LowpriceSubstates
+from config import DELETE_OLD_KEYBOARDS, MainMenuCommands
 from functions.get_usd import get_usd
 from functions.send_message_helper import send_message_helper
 from loader import bot
+from states import LowpriceSubstates
 
 
 @bot.message_handler(

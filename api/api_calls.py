@@ -12,12 +12,11 @@ from typing import Any, Callable, Dict, Optional
 
 from classes.user_state import UserState
 from classes.user_state_data import UserStateData
-from config import (
-    COUNTRIES_API_HEADERS, CITIES_API_HEADERS, HOTELS_API_HEADERS, LowpriceSubstates, HighpriceSubstates
-)
+from config import COUNTRIES_API_HEADERS, CITIES_API_HEADERS, HOTELS_API_HEADERS
 from exceptions.fatal_error import FatalError
 from exceptions.data_unavalible import DataUnavailible
 from functions.console_message import console_message
+from states import LowpriceSubstates, HighpriceSubstates
 
 
 class ApiCalls:

@@ -15,10 +15,7 @@ from classes.user_state import UserState
 from classes.user_state_data import UserStateData
 from classes.countries import Countries
 from commands.select_city import select_city
-from config import (
-    BestdealSubstates, DELETE_OLD_KEYBOARDS, HighpriceSubstates, LowpriceSubstates, MAX_KEYS_PER_KEYBOARD,
-    POPULAR_COUNTRIES
-)
+from config import DELETE_OLD_KEYBOARDS, MAX_KEYS_PER_KEYBOARD, POPULAR_COUNTRIES
 from exceptions.data_unavalible import DataUnavailible
 from functions.cities_per_country import cities_per_country
 from functions.console_message import console_message
@@ -26,6 +23,7 @@ from functions.send_message_helper import send_message_helper
 from functions.get_usd import get_usd
 from functions.start_new import start_new
 from loader import bot, storage, countries, select_country_buttons_callback_factory
+from states import BestdealSubstates, LowpriceSubstates, HighpriceSubstates
 
 
 # select_country_buttons_callback_factory = CallbackData('cmd_id', prefix='country')

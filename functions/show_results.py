@@ -11,7 +11,7 @@ from classes.city import City
 from classes.hotel import Hotel
 from classes.user_state_data import UserStateData
 from commands.menu import menu
-from config import LowpriceSubstates, SUBSTATE_NONE, STORE_DATA_LOCALLY, LOCAL_STORAGE
+from config import STORE_DATA_LOCALLY, LOCAL_STORAGE
 from functions.cashfile import cashfile
 from functions.get_usd import get_usd
 from functions.print_results_data import print_results_data

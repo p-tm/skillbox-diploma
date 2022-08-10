@@ -8,11 +8,12 @@ from typing import Any
 from classes.user_state import UserState
 from classes.user_state_data import UserStateData
 from commands.select_checkin_date import select_checkin_date
-from config import BestdealSubstates, DELETE_OLD_KEYBOARDS, HighpriceSubstates, LowpriceSubstates, MAX_PHOTOS_AMOUNT
+from config import DELETE_OLD_KEYBOARDS, MAX_PHOTOS_AMOUNT
 from functions.get_usd import get_usd
 from functions.send_message_helper import send_message_helper
 from functions.value_valid import value_valid
 from loader import bot
+from states import BestdealSubstates, LowpriceSubstates, HighpriceSubstates
 
 
 def select_photos_amount(message: telebot.types.Message) -> None:

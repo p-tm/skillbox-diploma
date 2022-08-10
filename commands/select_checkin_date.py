@@ -10,7 +10,7 @@ from typing import Dict
 from classes.user_state import UserState
 from classes.user_state_data import UserStateData
 from commands.select_checkout_date import select_checkout_date
-from config import BestdealSubstates, DELETE_OLD_KEYBOARDS, HighpriceSubstates, LowpriceSubstates
+from config import DELETE_OLD_KEYBOARDS
 from functions.get_usd import get_usd
 from functions.keyboard_input_date import keyboard_input_date
 from functions.console_message import console_message
@@ -18,6 +18,7 @@ from functions.send_message_helper import send_message_helper
 from functions.keyboard_input_date import keyboard_input_date, input_date_callback_factory
 from functions.reenter_date import reenter_date
 from loader import bot
+from states import BestdealSubstates, LowpriceSubstates, HighpriceSubstates
 
 
 def select_checkin_date(message: telebot.types.Message) -> None:

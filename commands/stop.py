@@ -8,10 +8,10 @@ from typing import Any, Dict
 from classes.user_state import UserState
 from classes.user_state_data import UserStateData
 from commands.menu import menu
-from config import DELETE_OLD_KEYBOARDS, SUBSTATE_NONE
+from config import DELETE_OLD_KEYBOARDS
 from functions.get_usd import get_usd
-from functions.send_message_helper import send_message_helper
 from loader import bot
+
 
 @bot.message_handler(commands=['stop'])
 def stop(message: telebot.types.Message) -> None:
@@ -52,8 +52,5 @@ def stop(message: telebot.types.Message) -> None:
 
     # сбрасываем все значимые состояния
     bot.set_state(user_id=usd.user, state=UserState.user_started_bot, chat_id=usd.chat)
-
-    # usd.reinit_keyboard()
-    # usd.substate = SUBSTATE_NONE
 
     menu(message=message)

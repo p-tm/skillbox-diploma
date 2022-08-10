@@ -12,10 +12,11 @@ from classes.user_state import UserState
 from classes.user_state_data import UserStateData
 from commands.select_checkin_date import select_checkin_date
 from commands.select_photos_amount import select_photos_amount
-from config import BestdealSubstates, DELETE_OLD_KEYBOARDS, HighpriceSubstates, LowpriceSubstates, YesNo
+from config import DELETE_OLD_KEYBOARDS
 from functions.get_usd import get_usd
 from functions.send_message_helper import send_message_helper
 from loader import bot, yesno_buttons_callback_factory
+from states import BestdealSubstates, LowpriceSubstates, HighpriceSubstates, YesNo
 
 # yesno_buttons_callback_factory = CallbackData('cmd_id', prefix='yes_no')
 
