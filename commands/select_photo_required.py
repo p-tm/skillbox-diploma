@@ -104,6 +104,8 @@ def photo_required_button(call: telebot.types.CallbackQuery) -> None:
 
     """
     usd: UserStateData = get_usd(message=call.message)
+    if usd is None:
+        return
 
     callback_data: Dict[str, str] = yesno_buttons_callback_factory.parse(callback_data=call.data)
 

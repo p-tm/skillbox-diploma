@@ -19,7 +19,7 @@ def start_new(message: telebot.types.Message, usd: UserStateData) -> None:
     :param usd:
 
     """
-    horiz_delimiter = '------------------------------------------------------------------------------------------------'
+    horiz_delimiter = '---------------------------------------------------------'
 
     send_message_helper(bot.send_message, retries=3)(
         chat_id=usd.chat,

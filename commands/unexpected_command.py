@@ -21,6 +21,8 @@ def unexpected_command(message: telebot.types.Message) -> None:
 
     """
     usd: UserStateData = get_usd(message=message)
+    if usd is None:
+        return
 
     unknown_command_message: str = (
         'Неизвестная или недопустимая команда.\n'

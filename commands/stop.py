@@ -22,6 +22,8 @@ def stop(message: telebot.types.Message) -> None:
 
     """
     usd: UserStateData = get_usd(message=message)
+    if usd is None:
+        return
 
     """  логгирование """
     usd.history.add_rec('UCMD', '/stop')
