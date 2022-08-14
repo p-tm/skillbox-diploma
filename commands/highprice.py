@@ -55,7 +55,7 @@ def highprice(message: telebot.types.Message) -> None:
 
     bot.set_state(user_id=usd.user, chat_id=usd.chat, state=UserState.user_highprice_in_progress)
 
-    highprice_started_message: str = 'Итак, подибраем самые дорогие отели'
+    highprice_started_message: str = 'Итак, подбираем самые дорогие отели'
     msg: telebot.types.Message = send_message_helper(bot.send_message, retries=3)(
         chat_id=usd.chat,
         text=highprice_started_message

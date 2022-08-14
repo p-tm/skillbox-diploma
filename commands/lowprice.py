@@ -57,7 +57,7 @@ def lowprice(message: telebot.types.Message) -> None:
 
     bot.set_state(user_id=usd.user, chat_id=usd.chat, state=UserState.user_lowprice_in_progress)
 
-    lowprice_started_message: str = 'Итак, подибраем самые дешёвые отели'
+    lowprice_started_message: str = 'Итак, подбираем самые дешёвые отели'
     msg: telebot.types.Message = send_message_helper(bot.send_message, retries=3)(
         chat_id=usd.chat,
         text=lowprice_started_message

@@ -57,7 +57,7 @@ def bestdeal(message: telebot.types.Message) -> None:
 
     bot.set_state(user_id=usd.user, chat_id=usd.chat, state=UserState.user_bestdeal_in_progress)
 
-    bestdeal_started_message: str = 'Итак, подибраем отели по цене и расстоянию до центра'
+    bestdeal_started_message: str = 'Итак, подбираем отели по цене и расстоянию до центра'
     msg: telebot.types.Message = send_message_helper(bot.send_message, retries=3)(
         chat_id=usd.chat,
         text=bestdeal_started_message

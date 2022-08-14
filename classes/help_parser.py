@@ -7,6 +7,7 @@ import re
 from dataclasses import dataclass
 from typing import Callable, Iterable, List
 
+
 @dataclass
 class HelpParser:
 
@@ -50,7 +51,7 @@ class HelpParser:
         :return: описание по конкретной команде для чата Telegram
         """
         hdr_naked: str = self.between_tags(page, '<p class="header.*?">', '</p>').__next__()
-        header: str = '<b>{}</b>\n'.format(hdr_naked)
+        header: str = '🔹 <b>{}</b>\n'.format(hdr_naked)
         subheader: str = self.between_tags(page, '<p class="subheader">', '</p>').__next__()
         add_bullet: Callable = lambda x: ('🔹 ' + x) if x else ''
         body: List = [add_bullet(piece) for piece in self.between_tags(page, '<li>', '</li>')]
@@ -81,7 +82,7 @@ class HelpParser:
 
     def get_help_buttons(self):
         """
-        Выбирает все команды, описание которырх содержится в файле
+        Выбирает все команды, описание которых содержится в файле
 
         """
         template = r'<div class="(.*) cmd'

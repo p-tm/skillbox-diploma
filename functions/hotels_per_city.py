@@ -95,27 +95,27 @@ def hotels_per_city(message: telebot.types.Message) -> None:
         page=1
     )
 
-    # try:
-    #     hotels_list = hotels_raw['data']['body']['searchResults']['results']
-    # except Exception as e:
-    #     console_message(str(e))
-    #     raise DataUnavailible
-    data: Union[int, Dict] = hotels_raw.get('data', 0)
-    if data == 0:
-        console_message('Ошибка в структуре данных при получении перечня отелей')
-        raise DataUnavailible('Ошибка в структуре данных при получении перечня отелей')
-    body: Union[int, Dict] = data.get('body', 0)
-    if body == 0:
-        console_message('Ошибка в структуре данных при получении перечня отелей')
-        raise DataUnavailible('Ошибка в структуре данных при получении перечня отелей')
-    search_results: Union[int, Dict] = body.get('searchResults', 0)
-    if search_results == 0:
-        console_message('Ошибка в структуре данных при получении перечня отелей')
-        raise DataUnavailible('Ошибка в структуре данных при получении перечня отелей')
-    hotels_list: Union[int, List] = search_results.get('results', 0)
-    if hotels_list == 0:
-        console_message('Ошибка в структуре данных при получении перечня отелей')
-        raise DataUnavailible('Ошибка в структуре данных при получении перечня отелей')
+    try:
+        hotels_list = hotels_raw['data']['body']['searchResults']['results']
+    except Exception as e:
+        console_message(str(e))
+        raise DataUnavailible
+    # data: Union[int, Dict] = hotels_raw.get('data', 0)
+    # if data == 0:
+    #     console_message('Ошибка в структуре данных при получении перечня отелей')
+    #     raise DataUnavailible('Ошибка в структуре данных при получении перечня отелей')
+    # body: Union[int, Dict] = data.get('body', 0)
+    # if body == 0:
+    #     console_message('Ошибка в структуре данных при получении перечня отелей')
+    #     raise DataUnavailible('Ошибка в структуре данных при получении перечня отелей')
+    # search_results: Union[int, Dict] = body.get('searchResults', 0)
+    # if search_results == 0:
+    #     console_message('Ошибка в структуре данных при получении перечня отелей')
+    #     raise DataUnavailible('Ошибка в структуре данных при получении перечня отелей')
+    # hotels_list: Union[int, List] = search_results.get('results', 0)
+    # if hotels_list == 0:
+    #     console_message('Ошибка в структуре данных при получении перечня отелей')
+    #     raise DataUnavailible('Ошибка в структуре данных при получении перечня отелей')
 
     if not hotels_list:
         console_message('Получен пустой список отелей.')
@@ -130,7 +130,7 @@ def hotels_per_city(message: telebot.types.Message) -> None:
     # если bestdeal то нужно вручную отобрать отели, которые находятся
     # в заданном диапазоне расстояний
     # в остальных случаях сразу получаем требуемое кол-во отелей
-    hotels_list_filtered: List = []
+    hotels_list_filtered: List[Dict] = []
     if usd.state == UserState.USER_BESTDEAL_IN_PROGRESS:
         # бёрём только те отели, у которых есть поле 'City center'
         # и если оно есть то укладывается в заданный диапазон
